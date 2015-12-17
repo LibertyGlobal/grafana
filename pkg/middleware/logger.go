@@ -37,7 +37,7 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
+		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %d us", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
 
 		switch rw.Status() {
 		case 200, 304:
