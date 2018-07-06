@@ -16,8 +16,8 @@ type (
 		deletedOrgs map[int64]bool // orgs user has left access to
 		updatedOrgs map[int64]bool // orgs user has access
 
-		user  *m.User
-		teams map[int64]map[int64]bool // {orgId: { teamId: bool, teamId: bool, ... }, ...}
+		user      *m.User
+		userTeams map[int64]map[string]int64 // {orgId: { teamName: teamId, teamName: teamId, ... }, ...}
 
 		err error // fsm error
 		log log.Logger
@@ -49,7 +49,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 func syncUserStart(s *userSyncState) userSyncStateFn {
 	s.updatedOrgs = map[int64]bool{}
 	s.deletedOrgs = map[int64]bool{}
-	s.teams = map[int64]map[int64]bool{}
+	s.userTeams = map[int64]map[string]int64{}
 
 	return syncCheckUser
 }
@@ -279,7 +279,7 @@ func syncUserTeamsStart(s *userSyncState) userSyncStateFn {
 		}
 
 		updatedOrgsCount++
-		s.teams[orgId] = teamQueryToMap(teamQuery)
+		s.userTeams[orgId] = teamQueryToMap(teamQuery)
 	}
 
 	for orgId := range s.deletedOrgs {
@@ -296,7 +296,7 @@ func syncUserTeamsStart(s *userSyncState) userSyncStateFn {
 		}
 
 		deletedOrgsCount++
-		s.teams[orgId] = teamQueryToMap(teamQuery)
+		s.userTeams[orgId] = teamQueryToMap(teamQuery)
 	}
 
 	switch true {
@@ -326,20 +326,46 @@ func syncUserTeamJoin(s *userSyncState) userSyncStateFn {
 			continue
 		}
 
-		teamIdList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
+		// all teams user belongs in organisation
+		teamNameList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
 		if !exists {
 			continue
 		}
 
-		// here, we adding teams are not registered in updated/deleted orgs
-		for _, teamId := range teamIdList {
-			if _, exists := s.teams[orgId][teamId]; exists {
+		// checking if the user already member of the team.
+		for _, teamName := range teamNameList {
+			var err error
+
+			_, exists := s.userTeams[orgId][teamName]
+			if exists {
 				continue
 			}
 
+			// search for a team by provided team name
+			s.log.Debug("Searching for a teamId", "user", s.user, "orgId", orgId, "teamName", teamName)
+			cmdSearchTeam := &m.SearchTeamsQuery{
+				OrgId: orgId,
+				Name:  teamName,
+			}
+			err = bus.Dispatch(cmdSearchTeam)
+			if err != nil && err != m.ErrTeamNotFound {
+				s.err = err
+				return nil
+			}
+
+			// no team has been found..
+			if cmdSearchTeam.Result.TotalCount == 0 {
+				s.log.Debug("Team not found, skipping..", "user", s.user, "orgId", orgId, "teamName", teamName)
+				continue
+			}
+
+			// ok, take first and done with it..
+			teamId := cmdSearchTeam.Result.Teams[0].Id
+
+			// add user to team
 			s.log.Debug("Adding user to team", "user", s.user, "orgId", orgId, "teamId", teamId, "role")
 			cmd := &m.AddTeamMemberCommand{UserId: s.user.Id, OrgId: orgId, TeamId: teamId}
-			err := bus.Dispatch(cmd)
+			err = bus.Dispatch(cmd)
 			if err != nil && err != m.ErrTeamNotFound && err != m.ErrTeamMemberAlreadyAdded {
 				s.err = err
 				return nil
@@ -363,32 +389,32 @@ func syncUserTeamLeave(s *userSyncState) userSyncStateFn {
 			continue
 		}
 
-		teamIdMap, exists := s.teams[orgId]
+		teamIdMap, exists := s.userTeams[orgId]
 		if !exists {
 			continue
 		}
 
-		for teamId := range teamIdMap {
+		for _, teamId := range teamIdMap {
 			revokeTeams[orgId] = append(revokeTeams[orgId], teamId)
 		}
 	}
 
-	for orgId, teamIdMap := range s.teams {
-		teamIdList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
+	for orgId, teamMap := range s.userTeams {
+		teamNameList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
 		if !exists {
 			// user doesn't belong to org,
 			// revoke membership of all teams within org
-			for teamId := range teamIdMap {
+			for _, teamId := range teamMap {
 				revokeTeams[orgId] = append(revokeTeams[orgId], teamId)
 			}
 			continue
 		}
 
 		// check that every team membership is still valid
-		for teamId := range teamIdMap {
+		for teamName, teamId := range teamMap {
 			seen := false
-			for _, existTeamId := range teamIdList {
-				if existTeamId == teamId {
+			for _, existTeamName := range teamNameList {
+				if existTeamName == teamName {
 					seen = true
 					break
 				}
@@ -455,10 +481,11 @@ func syncUserOrgUpdateDefault(s *userSyncState) userSyncStateFn {
 	return nil
 }
 
-func teamQueryToMap(q *m.GetTeamsByUserQuery) map[int64]bool {
-	r := map[int64]bool{}
+// convert collection of Teams
+func teamQueryToMap(q *m.GetTeamsByUserQuery) map[string]int64 {
+	r := map[string]int64{}
 	for _, team := range q.Result {
-		r[team.Id] = true
+		r[team.Name] = team.Id
 	}
 	return r
 }

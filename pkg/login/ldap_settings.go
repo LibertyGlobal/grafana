@@ -43,10 +43,10 @@ type LdapAttributeMap struct {
 }
 
 type LdapGroupToOrgRole struct {
-	GroupDN string     `toml:"group_dn"`
-	OrgId   int64      `toml:"org_id"`
-	OrgRole m.RoleType `toml:"org_role"`
-	TeamId  int64      `toml:"team_id"`
+	GroupDN  string     `toml:"group_dn"`
+	OrgId    int64      `toml:"org_id"`
+	OrgRole  m.RoleType `toml:"org_role"`
+	TeamName string     `toml:"team_name"`
 }
 
 var LdapCfg LdapConfig

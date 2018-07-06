@@ -164,17 +164,17 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Login:       ldapUser.Username,
 		Email:       ldapUser.Email,
 		OrgRoles:    map[int64]m.RoleType{},
-		OrgTeams:    map[int64][]int64{},
+		OrgTeams:    map[int64][]string{},
 		HandleTeams: map[int64]bool{},
 	}
 
-	seenTeam := map[int64]bool{}
+	seenTeam := map[string]bool{}
 	for _, group := range a.server.LdapGroupMappings {
 		// if configuration includes teams, automatically
 		// enable join/leave mechanism per organisation basis.
 		// in this case manual team assignments will
 		// not be possible for LDAP enabled accounts.
-		if group.TeamId > 0 {
+		if group.TeamName != "" {
 			extUser.HandleTeams[group.OrgId] = true
 		}
 
@@ -190,14 +190,14 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 				extUser.OrgRoles[group.OrgId] = group.OrgRole
 			}
 
-			// if teamId is defined, register team membership as well
-			// also, skip duplicate team ids
-			if group.TeamId > 0 && !seenTeam[group.TeamId] {
-				seenTeam[group.TeamId] = true
+			// if teamName is defined, register team membership as well
+			// also, skip duplicate team names
+			if group.TeamName != "" && !seenTeam[group.TeamName] {
+				seenTeam[group.TeamName] = true
 
 				extUser.OrgTeams[group.OrgId] = append(
 					extUser.OrgTeams[group.OrgId],
-					group.TeamId,
+					group.TeamName,
 				)
 			}
 		}

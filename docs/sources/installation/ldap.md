@@ -83,7 +83,9 @@ org_role = "Editor"
 [[servers.group_mappings]]
 group_dn = "cn=team-1,cn=teams,dc=grafana,dc=org"
 # Please check notes related to Team Membership feature below
-team_id = 1
+# if team is available in organisation, user will automatically
+# join this team.
+team_name = "Team-1"
 # Optional mappings
 # org_id = 1
 # org_role = "Viewer"
@@ -164,9 +166,9 @@ will be set to `Admin`
 
 
 ### Team Membership
-If no `team_id` is specified in TOML configuration file, team management feature will be
-completely disabled. If any `group_mappings` entry is configured  with `team_id`,
-automatic team management will take place, but, **only for that particular organisation**. 
+If no `team_name` is specified in TOML configuration file, team management feature will be
+completely disabled. If any `group_mappings` entry is configured with `team_name`,
+automatic team management will take place, but, **only for that particular organisation**.
 
 So, any manual team assignments for LDAP-enabled accounts within organisation with enabled 
 automatic team membership feature, changes will be reset each time user logs in.

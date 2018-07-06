@@ -183,11 +183,12 @@ func TestLdapAuther(t *testing.T) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroupMappings: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
-					{GroupDN: "cn=team1", TeamId: 1},
+					{GroupDN: "cn=team1", TeamName: "team-test-1"},
 				},
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
+			sc.searchTeamsQueryReturns([]*m.SearchTeamDto{{Id: 1, Name: "team-test-1"}})
 			sc.userTeamsQueryReturns(nil)
 			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{
@@ -207,7 +208,7 @@ func TestLdapAuther(t *testing.T) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroupMappings: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
-					{GroupDN: "cn=team1", TeamId: 1},
+					{GroupDN: "cn=team1", TeamName: "team-test-1"},
 				},
 			})
 
@@ -251,7 +252,7 @@ func TestLdapAuther(t *testing.T) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroupMappings: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
-					{GroupDN: "cn=team2", OrgId: 2, TeamId: 2, OrgRole: "Viewer"},
+					{GroupDN: "cn=team2", OrgId: 2, TeamName: "team-name-2", OrgRole: "Viewer"},
 				},
 			})
 
@@ -428,6 +429,11 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.SearchTeamsQuery) error {
+			sc.searchTeamsQuery = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
 			sc.createUserCmd = cmd
 			sc.createUserCmd.Result = m.User{Login: cmd.Login}
@@ -477,6 +483,7 @@ type scenarioContext struct {
 	getUserByAuthInfoQuery *m.GetUserByAuthInfoQuery
 	getUserOrgListQuery    *m.GetUserOrgListQuery
 	getTeamsByUserQuery    *m.GetTeamsByUserQuery
+	searchTeamsQuery       *m.SearchTeamsQuery
 	createUserCmd          *m.CreateUserCommand
 	addOrgUserCmd          *m.AddOrgUserCommand
 	updateOrgUserCmd       *m.UpdateOrgUserCommand
@@ -510,6 +517,18 @@ func (sc *scenarioContext) userOrgsQueryReturns(orgs []*m.UserOrgDTO) {
 func (sc *scenarioContext) userTeamsQueryReturns(teams []*m.Team) {
 	bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
 		query.Result = teams
+		return nil
+	})
+}
+
+func (sc *scenarioContext) searchTeamsQueryReturns(teams []*m.SearchTeamDto) {
+	bus.AddHandler("test", func(query *m.SearchTeamsQuery) error {
+		query.Result = m.SearchTeamQueryResult{
+			Teams:      teams,
+			TotalCount: int64(len(teams)),
+			Page:       1,
+			PerPage:    1,
+		}
 		return nil
 	})
 }

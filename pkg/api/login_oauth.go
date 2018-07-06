@@ -159,7 +159,7 @@ func OAuthLogin(ctx *m.ReqContext) {
 		Login:       userInfo.Login,
 		Email:       userInfo.Email,
 		OrgRoles:    map[int64]m.RoleType{},
-		OrgTeams:    map[int64][]int64{},
+		OrgTeams:    map[int64][]string{},
 		HandleTeams: map[int64]bool{},
 	}
 
