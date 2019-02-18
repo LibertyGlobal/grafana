@@ -21,6 +21,7 @@ type ExternalUserInfo struct {
 	Name           string
 	Groups         []string
 	OrgRoles       map[int64]RoleType
+	OrgTeams       map[int64][]string
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 }
 
