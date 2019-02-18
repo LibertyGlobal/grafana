@@ -170,6 +170,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		OrgTeams:   map[int64][]string{},
 	}
 
 	if userInfo.Role != "" {
