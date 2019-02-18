@@ -176,18 +176,57 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Email:      ldapUser.Email,
 		Groups:     ldapUser.MemberOf,
 		OrgRoles:   map[int64]m.RoleType{},
+		OrgTeams:   map[int64][]string{},
 	}
 
 	for _, group := range a.server.LdapGroups {
-		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgId] != "" {
-			continue
-		}
-
 		if ldapUser.isMemberOf(group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			orgRole := extUser.OrgRoles[group.OrgId]
+
+			// assign the most powerful OrgRole found
+			if group.OrgRole.Includes(orgRole) {
+				a.log.Debug("Ldap Auth: user belongs to org role",
+					"login", extUser.Login,
+					"org", group.OrgId,
+					"role", group.OrgRole,
+				)
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+				a.log.Debug("Ldap Auth: user is GrafanaAdmin",
+					"login", extUser.Login,
+					"org", group.OrgId,
+				)
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			}
+
+			// if teamName is defined, register team membership
+			if group.TeamName != "" {
+				// assign OrgTeams to the user and avoid duplicates
+				teamAlreadyAssigned := false
+				for _, extUserTeam := range extUser.OrgTeams[group.OrgId] {
+					if extUserTeam == group.TeamName {
+						teamAlreadyAssigned = true
+					}
+				}
+				if teamAlreadyAssigned {
+					a.log.Debug("Ldap Auth: duplicate org team",
+						"login", extUser.Login,
+						"org", group.OrgId,
+						"team", group.TeamName,
+					)
+				} else {
+					a.log.Debug("Ldap Auth: user belongs to org team",
+						"login", extUser.Login,
+						"org", group.OrgId,
+						"team", group.TeamName,
+					)
+					extUser.OrgTeams[group.OrgId] = append(
+						extUser.OrgTeams[group.OrgId],
+						group.TeamName,
+					)
+				}
 			}
 		}
 	}
