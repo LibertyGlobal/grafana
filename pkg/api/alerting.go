@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -44,6 +45,36 @@ func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		return response.Error(500, "Failed to fetch alert states", err)
+	}
+
+	return response.JSON(200, query.Result)
+}
+
+//GET /api/alerts/top
+func GetTopAlerts(c *models.ReqContext) response.Response {
+
+	query := &models.GetTopAlertsQuery{
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
+		OrgId:       c.OrgId,
+		DashboardId: c.QueryInt64("dashboardId"),
+		Limit:       c.QueryInt64("limit"),
+	}
+
+	if query.To == 0 {
+		query.To = time.Now().UnixNano() / int64(time.Millisecond)
+	}
+
+	if query.From == 0 {
+		query.From = query.To - 86400000
+	}
+
+	if query.Limit == 0 {
+		query.Limit = 10
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return response.Error(500, "List top alerts failed", err)
 	}
 
 	return response.JSON(200, query.Result)
