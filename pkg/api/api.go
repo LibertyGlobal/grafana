@@ -351,6 +351,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, Wrap(GetAlert))
 			alertsRoute.Get("/", Wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
+			alertsRoute.Get("/top", Wrap(GetTopAlerts))
 		})
 
 		if hs.Cfg.IsNgAlertEnabled() {
