@@ -372,6 +372,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
 			alertsRoute.Get("/", routing.Wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
+			alertsRoute.Get("/top", routing.Wrap(GetTopAlerts))
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(GetAlertNotifiers))

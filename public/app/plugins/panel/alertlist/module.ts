@@ -13,6 +13,7 @@ class AlertListPanel extends PanelCtrl {
 
   showOptions = [
     { text: 'Current state', value: 'current' },
+    { text: 'Top alerts', value: 'top' },
     { text: 'Recent state changes', value: 'changes' },
   ];
 
@@ -26,6 +27,7 @@ class AlertListPanel extends PanelCtrl {
 
   stateFilter: any = {};
   currentAlerts: any = [];
+  topAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
   templateSrv: string;
@@ -100,6 +102,8 @@ class AlertListPanel extends PanelCtrl {
 
     if (this.panel.show === 'current') {
       getAlertsPromise = this.getCurrentAlertState();
+    } else if (this.panel.show === 'top') {
+      getAlertsPromise = this.getTopAlerts();
     } else if (this.panel.show === 'changes') {
       getAlertsPromise = this.getStateChanges();
     } else {
@@ -192,6 +196,37 @@ class AlertListPanel extends PanelCtrl {
           this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
           return this.currentAlerts;
+        })
+    );
+  }
+
+  getTopAlerts() {
+    const params: any = {
+      limit: this.panel.limit,
+    };
+
+    if (this.panel.onlyAlertsOnDashboard) {
+      params.dashboardId = this.dashboard.id;
+    }
+
+    params.from = dateMath.parse(this.dashboard.time.from)!.unix() * 1000;
+    params.to = dateMath.parse(this.dashboard.time.to)!.unix() * 1000;
+
+    return promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get('/api/alerts/top', params, `alert-list-get-top-alert-state-${this.panel.id}`)
+        .then((data) => {
+          this.topAlerts = _.map(data, (fa) => {
+            fa.latestAlertDate = this.dashboard.formatDate(fa.latestAlert, 'MMM D, YYYY HH:mm:ss');
+            fa.stateModel = alertDef.getStateDisplayModel('alerting');
+            return fa;
+          });
+          if (this.topAlerts.length > this.panel.limit) {
+            this.topAlerts = this.topAlerts.slice(0, this.panel.limit);
+          }
+          this.noAlertsMessage = this.topAlerts.length === 0 ? 'No alerts in current time range' : '';
+
+          return this.topAlerts;
         })
     );
   }
