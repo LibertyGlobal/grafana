@@ -50,6 +50,7 @@ type LdapGroupToOrgRole struct {
 	OrgId          int64      `toml:"org_id"`
 	IsGrafanaAdmin *bool      `toml:"grafana_admin"` // This is a pointer to know if it was set or not (for backwards compatibility)
 	OrgRole        m.RoleType `toml:"org_role"`
+	TeamName       string     `toml:"team_name"`
 }
 
 var LdapCfg LdapConfig
