@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-const PUSHOVER_ENDPOINT = "https://api.pushover.net/1/messages.json"
-
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "pushover",
@@ -24,6 +22,10 @@ func init() {
 		Factory:     NewPushoverNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Pushover settings</h3>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Pushover Endpoint</span>
+        <input type="text" class="gf-form-input" placeholder="The URL of the Pushover service. Leave empty for the default value" ng-model="ctrl.model.settings.pushoverEndpoint"></input>
+      </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">API Token</span>
         <input type="text" class="gf-form-input" required placeholder="Application token" ng-model="ctrl.model.settings.apiToken"></input>
@@ -87,6 +89,7 @@ func init() {
 }
 
 func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+	pushoverEndpoint := model.Settings.Get("pushoverEndpoint").MustString()
 	userKey := model.Settings.Get("userKey").MustString()
 	apiToken := model.Settings.Get("apiToken").MustString()
 	device := model.Settings.Get("device").MustString()
@@ -96,6 +99,9 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	sound := model.Settings.Get("sound").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
+	if pushoverEndpoint == "" {
+		pushoverEndpoint = "https://api.pushover.net/1/messages.json"
+	}
 	if userKey == "" {
 		return nil, alerting.ValidationError{Reason: "User key not given"}
 	}
@@ -103,33 +109,37 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "API token not given"}
 	}
 	return &PushoverNotifier{
-		NotifierBase: NewNotifierBase(model),
-		UserKey:      userKey,
-		ApiToken:     apiToken,
-		Priority:     priority,
-		Retry:        retry,
-		Expire:       expire,
-		Device:       device,
-		Sound:        sound,
-		Upload:       uploadImage,
-		log:          log.New("alerting.notifier.pushover"),
+		NotifierBase:     NewNotifierBase(model),
+		PushoverEndpoint: pushoverEndpoint,
+		UserKey:          userKey,
+		ApiToken:         apiToken,
+		Priority:         priority,
+		Retry:            retry,
+		Expire:           expire,
+		Device:           device,
+		Sound:            sound,
+		Upload:           uploadImage,
+		log:              log.New("alerting.notifier.pushover"),
 	}, nil
 }
 
 type PushoverNotifier struct {
 	NotifierBase
-	UserKey  string
-	ApiToken string
-	Priority int
-	Retry    int
-	Expire   int
-	Device   string
-	Sound    string
-	Upload   bool
-	log      log.Logger
+	PushoverEndpoint string
+	UserKey          string
+	ApiToken         string
+	Priority         int
+	Retry            int
+	Expire           int
+	Device           string
+	Sound            string
+	Upload           bool
+	log              log.Logger
 }
 
 func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
+	this.log.Info("Executing pushover notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
@@ -158,7 +168,7 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	cmd := &m.SendWebhookSync{
-		Url:        PUSHOVER_ENDPOINT,
+		Url:        this.PushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
