@@ -94,6 +94,10 @@ func init() {
           Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
         </info-popover>
       </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Upload Url</span>
+        <input type="text" class="gf-form-input max-width-30" ng-model="ctrl.model.settings.uploadImageUrl" placeholder="Slack file.upload API url. Leave empty for the default one."></input>
+      </div>
     `,
 	})
 
@@ -112,6 +116,11 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	mention := model.Settings.Get("mention").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
+	uploadImageUrl := model.Settings.Get("uploadImageUrl").MustString()
+
+	if uploadImageUrl == "" {
+		uploadImageUrl = "https://slack.com/api/files.upload"
+	}
 
 	return &SlackNotifier{
 		NotifierBase: NewNotifierBase(model),
@@ -123,6 +132,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		Mention:      mention,
 		Token:        token,
 		Upload:       uploadImage,
+		UploadUrl:    uploadImageUrl,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil
 }
@@ -137,6 +147,7 @@ type SlackNotifier struct {
 	Mention   string
 	Token     string
 	Upload    bool
+	UploadUrl string
 	log       log.Logger
 }
 
@@ -218,7 +229,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 	if this.Token != "" && this.UploadImage {
-		err = SlackFileUpload(evalContext, this.log, "https://slack.com/api/files.upload", this.Recipient, this.Token)
+		err = SlackFileUpload(evalContext, this.log, this.UploadUrl, this.Recipient, this.Token)
 		if err != nil {
 			return err
 		}
