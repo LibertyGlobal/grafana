@@ -221,7 +221,9 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
   render() {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total, p25, p50, p75, p99 } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total, p25, p50, p75, p99 };
-    return seriesList.map((series, i) => (
+    return _.sortBy(seriesList, s => (
+      isNaN(s.id) ? s.id : parseInt(s.id, 0)
+    )).map((series, i) => (
       <LegendItem
         // This trick required because TimeSeries.id is not unique (it's just TimeSeries.alias).
         // In future would be good to make id unique across the series list.
