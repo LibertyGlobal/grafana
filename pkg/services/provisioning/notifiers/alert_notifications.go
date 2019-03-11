@@ -94,15 +94,19 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 		if cmd.Result == nil {
 			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.Uid)
 			insertCmd := &models.CreateAlertNotificationCommand{
-				Uid:                   notification.Uid,
-				Name:                  notification.Name,
-				Type:                  notification.Type,
-				IsDefault:             notification.IsDefault,
-				Settings:              notification.SettingsToJson(),
-				OrgId:                 notification.OrgId,
-				DisableResolveMessage: notification.DisableResolveMessage,
-				Frequency:             notification.Frequency,
-				SendReminder:          notification.SendReminder,
+				Uid:                    notification.Uid,
+				Name:                   notification.Name,
+				Type:                   notification.Type,
+				IsDefault:              notification.IsDefault,
+				Settings:               notification.SettingsToJson(),
+				OrgId:                  notification.OrgId,
+				DisableResolveMessage:  notification.DisableResolveMessage,
+				DisableAlertingMessage: notification.DisableAlertingMessage,
+				DisableNoDataMessage:   notification.DisableNoDataMessage,
+				DisableUnknownMessage:  notification.DisableUnknownMessage,
+				DisablePendingMessage:  notification.DisablePendingMessage,
+				Frequency:              notification.Frequency,
+				SendReminder:           notification.SendReminder,
 			}
 
 			if err := bus.Dispatch(insertCmd); err != nil {
@@ -111,15 +115,19 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 		} else {
 			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
-				Uid:                   notification.Uid,
-				Name:                  notification.Name,
-				Type:                  notification.Type,
-				IsDefault:             notification.IsDefault,
-				Settings:              notification.SettingsToJson(),
-				OrgId:                 notification.OrgId,
-				DisableResolveMessage: notification.DisableResolveMessage,
-				Frequency:             notification.Frequency,
-				SendReminder:          notification.SendReminder,
+				Uid:                    notification.Uid,
+				Name:                   notification.Name,
+				Type:                   notification.Type,
+				IsDefault:              notification.IsDefault,
+				Settings:               notification.SettingsToJson(),
+				OrgId:                  notification.OrgId,
+				DisableResolveMessage:  notification.DisableResolveMessage,
+				DisableAlertingMessage: notification.DisableAlertingMessage,
+				DisableNoDataMessage:   notification.DisableNoDataMessage,
+				DisableUnknownMessage:  notification.DisableUnknownMessage,
+				DisablePendingMessage:  notification.DisablePendingMessage,
+				Frequency:              notification.Frequency,
+				SendReminder:           notification.SendReminder,
 			}
 
 			if err := bus.Dispatch(updateCmd); err != nil {
@@ -139,16 +147,20 @@ func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAs
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			Uid:                   notification.Uid,
-			OrgId:                 notification.OrgId,
-			OrgName:               notification.OrgName,
-			Name:                  notification.Name,
-			Type:                  notification.Type,
-			IsDefault:             notification.IsDefault,
-			Settings:              notification.Settings,
-			DisableResolveMessage: notification.DisableResolveMessage,
-			Frequency:             notification.Frequency,
-			SendReminder:          notification.SendReminder,
+			Uid:                    notification.Uid,
+			OrgId:                  notification.OrgId,
+			OrgName:                notification.OrgName,
+			Name:                   notification.Name,
+			Type:                   notification.Type,
+			IsDefault:              notification.IsDefault,
+			Settings:               notification.Settings,
+			DisableResolveMessage:  notification.DisableResolveMessage,
+			DisableAlertingMessage: notification.DisableAlertingMessage,
+			DisableNoDataMessage:   notification.DisableNoDataMessage,
+			DisableUnknownMessage:  notification.DisableUnknownMessage,
+			DisablePendingMessage:  notification.DisablePendingMessage,
+			Frequency:              notification.Frequency,
+			SendReminder:           notification.SendReminder,
 		})
 	}
 
