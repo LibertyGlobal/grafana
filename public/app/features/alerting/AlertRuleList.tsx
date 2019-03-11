@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import Page from 'app/core/components/Page/Page';
+import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
@@ -9,7 +9,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, AlertRule } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -20,7 +19,6 @@ export interface Props {
   togglePauseAlertRule: typeof togglePauseAlertRule;
   stateFilter: string;
   search: string;
-  isLoading: boolean;
 }
 
 export class AlertRuleList extends PureComponent<Props, any> {
@@ -29,6 +27,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     { text: 'OK', value: 'ok' },
     { text: 'Not OK', value: 'not_ok' },
     { text: 'Alerting', value: 'alerting' },
+    { text: 'Warning', value: 'warning' },
     { text: 'No Data', value: 'no_data' },
     { text: 'Paused', value: 'paused' },
     { text: 'Pending', value: 'pending' },
@@ -56,9 +55,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
     return 'all';
   }
 
-  onStateFilterChanged = (evt: React.ChangeEvent<HTMLSelectElement>) => {
+  onStateFilterChanged = event => {
     this.props.updateLocation({
-      query: { state: evt.target.value },
+      query: { state: event.target.value },
     });
   };
 
@@ -70,7 +69,8 @@ export class AlertRuleList extends PureComponent<Props, any> {
     });
   };
 
-  onSearchQueryChange = (value: string) => {
+  onSearchQueryChange = event => {
+    const { value } = event.target;
     this.props.setSearchQuery(value);
   };
 
@@ -78,7 +78,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
   };
 
-  alertStateFilterOption = ({ text, value }: { text: string; value: string }) => {
+  alertStateFilterOption = ({ text, value }) => {
     return (
       <option key={value} value={value}>
         {text}
@@ -87,20 +87,24 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   render() {
-    const { navModel, alertRules, search, isLoading } = this.props;
+    const { navModel, alertRules, search } = this.props;
 
     return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
+      <div>
+        <PageHeader model={navModel} />
+        <div className="page-container page-body">
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
-              <FilterInput
-                labelClassName="gf-form--has-input-icon gf-form--grow"
-                inputClassName="gf-form-input"
-                placeholder="Search alerts"
-                value={search}
-                onChange={this.onSearchQueryChange}
-              />
+              <label className="gf-form--has-input-icon gf-form--grow">
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  placeholder="Search alerts"
+                  value={search}
+                  onChange={this.onSearchQueryChange}
+                />
+                <i className="gf-form-input-icon fa fa-search" />
+              </label>
             </div>
             <div className="gf-form">
               <label className="gf-form-label">States</label>
@@ -128,8 +132,8 @@ export class AlertRuleList extends PureComponent<Props, any> {
               ))}
             </ol>
           </section>
-        </Page.Contents>
-      </Page>
+        </div>
+      </div>
     );
   }
 }
@@ -139,7 +143,6 @@ const mapStateToProps = (state: StoreState) => ({
   alertRules: getAlertRuleItems(state.alertRules),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
-  isLoading: state.alertRules.isLoading,
 });
 
 const mapDispatchToProps = {
@@ -149,9 +152,4 @@ const mapDispatchToProps = {
   togglePauseAlertRule,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(AlertRuleList)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));

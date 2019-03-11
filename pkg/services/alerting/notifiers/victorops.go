@@ -84,7 +84,10 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	messageType := evalContext.Rule.State
+
 	if evalContext.Rule.State == models.AlertStateAlerting { // translate 'Alerting' to 'CRITICAL' (Victorops analog)
+		messageType = AlertStateCritical
+	} else if evalContext.Rule.State == models.AlertStateWarning { // translate 'Warning' to 'CRITICAL' (Victorops analog)
 		messageType = AlertStateCritical
 	}
 

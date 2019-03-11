@@ -133,6 +133,8 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 		stateEmoji = "\u2753 " // Black Question Mark Ornament
 	case m.AlertStateAlerting:
 		stateEmoji = "\u26A0 " // Warning sign
+	case m.AlertStateWarning:
+		stateEmoji = "\u26A0 " // Warning sign
 	}
 
 	// Build message

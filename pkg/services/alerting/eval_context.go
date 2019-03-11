@@ -58,15 +58,25 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	case m.AlertStateNoData:
-		return &StateDescription{
-			Color: "#888888",
-			Text:  "No Data",
-		}
 	case m.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
 			Text:  "Alerting",
+		}
+	case m.AlertStateWarning:
+		return &StateDescription{
+			Color: "#990099",
+			Text:  "Warning",
+		}
+	case m.AlertStatePending:
+		return &StateDescription{
+			Color: "#FF6600",
+			Text:  "Pending",
+		}
+	case m.AlertStateNoData:
+		return &StateDescription{
+			Color: "#888888",
+			Text:  "No Data",
 		}
 	case m.AlertStateUnknown:
 		return &StateDescription{
@@ -120,6 +130,7 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 
 // GetNewState returns the new state from the alert rule evaluation
 func (c *EvalContext) GetNewState() m.AlertStateType {
+	// TODO: alerting
 	ns := getNewStateInternal(c)
 	if ns != m.AlertStateAlerting || c.Rule.For == 0 {
 		return ns

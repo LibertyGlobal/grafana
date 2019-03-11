@@ -6,22 +6,54 @@ import baron from 'baron';
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <div class="panel-container">
-      <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
-        <span class="panel-info-corner">
-          <i class="fa"></i>
-          <span class="panel-info-corner-inner"></span>
-        </span>
+  <div ng-class="{'panel-editor-container': ctrl.panel.isEditing, 'panel-height-helper': !ctrl.panel.isEditing}">
+    <div ng-class="{'panel-editor-container__panel': ctrl.panel.isEditing, 'panel-height-helper': !ctrl.panel.isEditing}">
+      <div class="panel-container">
+        <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
+          <span class="panel-info-corner">
+            <i class="fa"></i>
+            <span class="panel-info-corner-inner"></span>
+          </span>
 
-        <span class="panel-loading" ng-show="ctrl.loading">
-          <i class="fa fa-spinner fa-spin"></i>
-        </span>
+          <span class="panel-loading" ng-show="ctrl.loading">
+            <i class="fa fa-spinner fa-spin"></i>
+          </span>
 
-        <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
+          <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
+        </div>
+
+        <div class="panel-content">
+          <ng-transclude class="panel-height-helper"></ng-transclude>
+        </div>
       </div>
+    </div>
 
-      <div class="panel-content">
-        <ng-transclude class="panel-height-helper"></ng-transclude>
+    <div ng-if="ctrl.panel.isEditing" ng-class="{'panel-editor-container__editor': ctrl.panel.isEditing,
+                                                 'panel-height-helper': !ctrl.panel.isEditing}">
+      <div class="tabbed-view tabbed-view--new">
+        <div class="tabbed-view-header">
+          <h3 class="tabbed-view-panel-title">
+            {{ctrl.pluginName}}
+          </h3>
+
+          <ul class="gf-tabs">
+            <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
+              <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
+                {{::tab.title}}
+              </a>
+            </li>
+          </ul>
+
+          <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
+            <i class="fa fa-remove"></i>
+          </button>
+        </div>
+
+        <div class="tabbed-view-body">
+          <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index" class="panel-height-helper">
+            <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -101,7 +133,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       ctrl.events.on('panel-size-changed', () => {
-        ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
+        ctrl.calculatePanelHeight();
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
@@ -112,21 +144,19 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style
-          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
+          ctrl.calculatePanelHeight();
           // then wait another cycle (this might not be needed)
           $timeout(() => {
             ctrl.render();
             resizeScrollableContent();
           });
-        }, 10);
+        });
       });
 
-      ctrl.events.on('render', () => {
-        // set initial height
-        if (!ctrl.height) {
-          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
-        }
+      // set initial height
+      ctrl.calculatePanelHeight();
 
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
@@ -147,7 +177,9 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
           if (
             ctrl.alertState.state === 'ok' ||
             ctrl.alertState.state === 'alerting' ||
-            ctrl.alertState.state === 'pending'
+            ctrl.alertState.state === 'pending' ||
+            ctrl.alertState.state === 'warning'
+            // TODO: alerting: add panel-alert-state--warning css
           ) {
             panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
@@ -193,6 +225,11 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
+
+      cornerInfoElem.on('click', () => {
+        infoDrop.close();
+        scope.$apply(ctrl.openInspector.bind(ctrl));
+      });
 
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);

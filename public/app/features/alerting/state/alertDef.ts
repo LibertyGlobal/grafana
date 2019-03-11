@@ -19,10 +19,11 @@ const conditionTypes = [{ text: 'Query', value: 'query' }];
 
 const alertStateSortScore = {
   alerting: 1,
-  no_data: 2,
-  pending: 3,
-  ok: 4,
-  paused: 5,
+  warning: 2,
+  no_data: 3,
+  pending: 4,
+  ok: 5,
+  paused: 6,
 };
 
 const evalFunctions = [
@@ -50,12 +51,19 @@ const reducerTypes = [
 
 const noDataModes = [
   { text: 'Alerting', value: 'alerting' },
+  { text: 'Warning', value: 'warning' },
   { text: 'No Data', value: 'no_data' },
   { text: 'Keep Last State', value: 'keep_state' },
   { text: 'Ok', value: 'ok' },
 ];
 
-const executionErrorModes = [{ text: 'Alerting', value: 'alerting' }, { text: 'Keep Last State', value: 'keep_state' }];
+const executionErrorModes = [
+  { text: 'Alerting', value: 'alerting' },
+  { text: 'Warning', value: 'warning' },
+  { text: 'Unknown', value: 'unknown' },
+  { text: 'Keep Last State', value: 'keep_state' },
+  { text: 'Ok', value: 'ok' },
+];
 
 function createReducerPart(model) {
   const def = new QueryPartDef({ type: model.type, defaultParams: [] });
@@ -78,11 +86,19 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-critical',
       };
     }
+    case 'warning': {
+      return {
+        text: 'WARNING',
+        iconClass: 'icon-gf icon-gf-warning',
+        stateClass: 'alert-state-warning',
+      };
+    }
+    // TODO: alerting icon-gf-warning alert-state-no-data alert-state-pending alert-state-unknown
     case 'no_data': {
       return {
         text: 'NO DATA',
         iconClass: 'fa fa-question',
-        stateClass: 'alert-state-warning',
+        stateClass: 'alert-state-no-data',
       };
     }
     case 'paused': {
@@ -96,14 +112,14 @@ function getStateDisplayModel(state) {
       return {
         text: 'PENDING',
         iconClass: 'fa fa-exclamation',
-        stateClass: 'alert-state-warning',
+        stateClass: 'alert-state-pending',
       };
     }
     case 'unknown': {
       return {
         text: 'UNKNOWN',
         iconClass: 'fa fa-question',
-        stateClass: 'alert-state-paused',
+        stateClass: 'alert-state-unknown',
       };
     }
   }

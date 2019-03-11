@@ -57,7 +57,7 @@ func (this *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext 
 	if (evalContext.PrevAlertState == m.AlertStateAlerting) && (evalContext.Rule.State == m.AlertStateOK) {
 		return true
 	}
-	return evalContext.Rule.State == m.AlertStateAlerting
+	return evalContext.Rule.State == m.AlertStateAlerting || evalContext.Rule.State == m.AlertStateWarning
 }
 
 func (this *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, match *alerting.EvalMatch, ruleUrl string) *simplejson.Json {

@@ -82,6 +82,8 @@ func (this *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	case m.AlertStateAlerting:
 		err = this.createAlert(evalContext)
+	case m.AlertStateWarning:
+		err = this.createAlert(evalContext)
 	}
 	return err
 }

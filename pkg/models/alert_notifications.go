@@ -24,18 +24,23 @@ var (
 )
 
 type AlertNotification struct {
-	Id                    int64            `json:"id"`
-	Uid                   string           `json:"-"`
-	OrgId                 int64            `json:"-"`
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             time.Duration    `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"`
-	Created               time.Time        `json:"created"`
-	Updated               time.Time        `json:"updated"`
+	Id                     int64            `json:"id"`
+	Uid                    string           `json:"-"`
+	OrgId                  int64            `json:"-"`
+	Name                   string           `json:"name"`
+	Type                   string           `json:"type"`
+	SendReminder           bool             `json:"sendReminder"`
+	DisableResolveMessage  bool             `json:"disableResolveMessage"`
+	DisableAlertingMessage bool             `json:"disableAlertingMessage"`
+	DisableWarningMessage  bool             `json:"disableWarningMessage"`
+	DisableNoDataMessage   bool             `json:"disableNoDataMessage"`
+	DisableUnknownMessage  bool             `json:"disableUnknownMessage"`
+	DisablePendingMessage  bool             `json:"disablePendingMessage"`
+	Frequency              time.Duration    `json:"frequency"`
+	IsDefault              bool             `json:"isDefault"`
+	Settings               *simplejson.Json `json:"settings"`
+	Created                time.Time        `json:"created"`
+	Updated                time.Time        `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
