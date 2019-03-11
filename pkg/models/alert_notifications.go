@@ -24,57 +24,73 @@ var (
 )
 
 type AlertNotification struct {
-	Id                    int64            `json:"id"`
-	Uid                   string           `json:"-"`
-	OrgId                 int64            `json:"-"`
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             time.Duration    `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"`
-	Created               time.Time        `json:"created"`
-	Updated               time.Time        `json:"updated"`
+	Id                     int64            `json:"id"`
+	Uid                    string           `json:"-"`
+	OrgId                  int64            `json:"-"`
+	Name                   string           `json:"name"`
+	Type                   string           `json:"type"`
+	SendReminder           bool             `json:"sendReminder"`
+	DisableResolveMessage  bool             `json:"disableResolveMessage"`
+	DisableAlertingMessage bool             `json:"disableAlertingMessage"`
+	DisableNoDataMessage   bool             `json:"disableNoDataMessage"`
+	DisableUnknownMessage  bool             `json:"disableUnknownMessage"`
+	DisablePendingMessage  bool             `json:"disablePendingMessage"`
+	Frequency              time.Duration    `json:"frequency"`
+	IsDefault              bool             `json:"isDefault"`
+	Settings               *simplejson.Json `json:"settings"`
+	Created                time.Time        `json:"created"`
+	Updated                time.Time        `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string           `json:"-"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"`
+	Uid                    string           `json:"-"`
+	Name                   string           `json:"name"  binding:"Required"`
+	Type                   string           `json:"type"  binding:"Required"`
+	SendReminder           bool             `json:"sendReminder"`
+	DisableResolveMessage  bool             `json:"disableResolveMessage"`
+	DisableAlertingMessage bool             `json:"disableAlertingMessage"`
+	DisableNoDataMessage   bool             `json:"disableNoDataMessage"`
+	DisableUnknownMessage  bool             `json:"disableUnknownMessage"`
+	DisablePendingMessage  bool             `json:"disablePendingMessage"`
+	Frequency              string           `json:"frequency"`
+	IsDefault              bool             `json:"isDefault"`
+	Settings               *simplejson.Json `json:"settings"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationCommand struct {
-	Id                    int64            `json:"id"  binding:"Required"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
+	Id                     int64            `json:"id" binding:"Required"`
+	Name                   string           `json:"name" binding:"Required"`
+	Type                   string           `json:"type" binding:"Required"`
+	SendReminder           bool             `json:"sendReminder"`
+	DisableResolveMessage  bool             `json:"disableResolveMessage"`
+	DisableAlertingMessage bool             `json:"disableAlertingMessage"`
+	DisableNoDataMessage   bool             `json:"disableNoDataMessage"`
+	DisableUnknownMessage  bool             `json:"disableUnknownMessage"`
+	DisablePendingMessage  bool             `json:"disablePendingMessage"`
+	Frequency              string           `json:"frequency"`
+	IsDefault              bool             `json:"isDefault"`
+	Settings               *simplejson.Json `json:"settings" binding:"Required"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
-	Uid                   string
-	Name                  string
-	Type                  string
-	SendReminder          bool
-	DisableResolveMessage bool
-	Frequency             string
-	IsDefault             bool
-	Settings              *simplejson.Json
+	Uid                    string
+	Name                   string
+	Type                   string
+	SendReminder           bool
+	DisableResolveMessage  bool
+	DisableAlertingMessage bool
+	DisableNoDataMessage   bool
+	DisableUnknownMessage  bool
+	DisablePendingMessage  bool
+	Frequency              string
+	IsDefault              bool
+	Settings               *simplejson.Json
 
 	OrgId  int64
 	Result *AlertNotification
