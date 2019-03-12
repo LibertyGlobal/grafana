@@ -21,8 +21,10 @@ func NewEvalHandler() *DefaultEvalHandler {
 	}
 }
 
+// TODO: warning
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	firing := true
+	warning := true
 	noDataFound := true
 	conditionEvals := ""
 
@@ -40,18 +42,22 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 		if i == 0 {
 			firing = cr.Firing
+			warning = cr.Warning
 			noDataFound = cr.NoDataFound
 		}
 
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
+			warning = warning || cr.Warning
 			noDataFound = noDataFound || cr.NoDataFound
 		} else {
 			firing = firing && cr.Firing
+			warning = warning && cr.Warning
 			noDataFound = noDataFound && cr.NoDataFound
 		}
 
+		//TODO: add warning messages here
 		if i > 0 {
 			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"
 		} else {
@@ -63,6 +69,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	context.ConditionEvals = conditionEvals + " = " + strconv.FormatBool(firing)
 	context.Firing = firing
+	context.Warning = warning
 	context.NoDataFound = noDataFound
 	context.EndTime = time.Now()
 

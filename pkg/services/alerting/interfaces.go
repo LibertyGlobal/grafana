@@ -54,9 +54,11 @@ func (notifiers notifierStateSlice) ShouldUploadImage() bool {
 
 type ConditionResult struct {
 	Firing      bool
+	Warning     bool
 	NoDataFound bool
 	Operator    string
 	EvalMatches []*EvalMatch
+	WarnMatches []*EvalMatch
 }
 
 type Condition interface {

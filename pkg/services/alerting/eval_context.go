@@ -13,6 +13,7 @@ import (
 
 type EvalContext struct {
 	Firing         bool
+	Warning        bool
 	IsTestRun      bool
 	EvalMatches    []*EvalMatch
 	Logs           []*ResultLogEntry
@@ -142,6 +143,7 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 	return m.AlertStatePending
 }
 
+//TODO: warning
 func getNewStateInternal(c *EvalContext) m.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
@@ -158,6 +160,10 @@ func getNewStateInternal(c *EvalContext) m.AlertStateType {
 
 	if c.Firing {
 		return m.AlertStateAlerting
+	}
+
+	if c.Warning {
+		return m.AlertStateWarning
 	}
 
 	if c.NoDataFound {

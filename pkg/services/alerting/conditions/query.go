@@ -26,6 +26,7 @@ type QueryCondition struct {
 	Query         AlertQuery
 	Reducer       QueryReducer
 	Evaluator     AlertEvaluator
+	Warning       AlertEvaluator
 	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
 }
@@ -37,6 +38,7 @@ type AlertQuery struct {
 	To           string
 }
 
+//TODO: warning
 func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
 	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
 
@@ -47,11 +49,20 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 	emptySerieCount := 0
 	evalMatchCount := 0
+	warnMatchCount := 0
 	var matches []*alerting.EvalMatch
+	var warningMatches []*alerting.EvalMatch
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
+
+		var warnMatch bool
+		if c.Warning == nil {
+			warnMatch = false
+		} else {
+			warnMatch = c.Warning.Eval(reducedValue)
+		}
 
 		if !reducedValue.Valid {
 			emptySerieCount++
@@ -67,6 +78,16 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 			evalMatchCount++
 
 			matches = append(matches, &alerting.EvalMatch{
+				Metric: series.Name,
+				Value:  reducedValue,
+				Tags:   series.Tags,
+			})
+		}
+
+		if warnMatch {
+			warnMatchCount++
+
+			warningMatches = append(matches, &alerting.EvalMatch{
 				Metric: series.Name,
 				Value:  reducedValue,
 				Tags:   series.Tags,
@@ -93,9 +114,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 	return &alerting.ConditionResult{
 		Firing:      evalMatchCount > 0,
+		Warning:     warnMatchCount > 0,
 		NoDataFound: emptySerieCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
+		WarnMatches: warningMatches,
 	}, nil
 }
 
