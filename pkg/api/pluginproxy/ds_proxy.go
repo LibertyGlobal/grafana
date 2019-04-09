@@ -250,6 +250,19 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
 			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
+		if proxy.ctx.Req.Request.Method == "GET" {
+			// TODO: detele it after a testing period 
+			// leaved here for a testing purposes
+			// if we will not catch the any odd queries, make sense to delete this debug message
+			logger.Info("Elasticsearch track proxy GET request",
+				"Request", proxy.ctx.Req.Request,
+				"proxyPath", proxy.proxyPath,
+				"Database", proxy.ds.Database)
+		}
+		expectedMappingPath := proxy.ds.Database + "/_mapping"
+		if proxy.ctx.Req.Request.Method == "GET" && proxy.proxyPath != expectedMappingPath {
+			return errors.New("Gets not allowed on proxied Elasticsearch datasource except on " + expectedMappingPath)
+		}
 	}
 
 	// found route if there are any
