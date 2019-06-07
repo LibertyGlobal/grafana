@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -266,6 +266,11 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
+	err := proxy.checkUserTeamDatasourceAccess()
+	if err != nil {
+		return err
+	}
+
 	// found route if there are any
 	if len(proxy.plugin.Routes) > 0 {
 		for _, route := range proxy.plugin.Routes {
@@ -288,6 +293,58 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
+}
+
+// Check if a currently logged in user has access to this datasource
+// If any of the user's groups match the list of allowed groups defined
+// in this datasource's configuration or there are no allowed groups defined
+// the access for the user is granted.
+// Returns error or nil if access is allowed
+func (proxy *DataSourceProxy) checkUserTeamDatasourceAccess() error {
+	if proxy.ctx.IsAnonymous {
+		logger.Debug("Anonymouse access is used, check is success")
+		return nil
+	}
+
+	allowedTeams := proxy.ds.JsonData.Get("allowedTeams").MustString("")
+	allowedTeamsList := strings.Split(allowedTeams, ",")
+	if len(allowedTeamsList) == 0 {
+		logger.Debug("No allowed teams are speciofied for the datasource: %s, check is success", proxy.ds.Name)
+		return nil
+	}
+
+	userTeams, err := proxy.getUserTeams()
+	if err != nil {
+		return err
+	}
+
+	for _, allowedTeam := range allowedTeamsList {
+		if proxy.checkUserHasTeam(userTeams, allowedTeam) {
+			logger.Debug("The allowed team: %s of the user: %s matches the user team for the datasource: %s, check is success", allowedTeam, proxy.ctx.Login, proxy.ds.Name)
+			return nil
+		}
+	}
+
+	return errors.New(fmt.Sprintf("The user: %s has no access to the datasource: %s with allowed teams: %s", proxy.ctx.Login, proxy.ds.Name, strings.Join(allowedTeamsList, ",")))
+}
+
+// Check if there is a specified team name in the provided list of user's teams
+func (proxy *DataSourceProxy) checkUserHasTeam(userTeams []*m.TeamDTO, teamName string) bool {
+	for _, userTeam := range userTeams {
+		if userTeam.Name == teamName {
+			// user has a team with a matching name
+			return true
+		}
+	}
+	// no matching teams found
+	return false
+}
+
+// Get the list of user's teams from the database
+func (proxy *DataSourceProxy) getUserTeams() ([]*m.TeamDTO, error) {
+	query := m.GetTeamsByUserQuery{OrgId: proxy.ctx.OrgId, UserId: proxy.ctx.UserId}
+	err := bus.Dispatch(&query)
+	return query.Result, err
 }
 
 func (proxy *DataSourceProxy) logRequest() {
