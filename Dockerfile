@@ -73,6 +73,9 @@ COPY --from=0 /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server 
 COPY --from=1 /usr/src/app/public ./public
 COPY --from=1 /usr/src/app/tools ./tools
 COPY tools/phantomjs/render.js ./tools/phantomjs/render.js
+RUN rm -f ./tools/phantomjs/phantomjs
+RUN cp -f /bin/echo ./tools/phantomjs/phantomjs
+RUN chmod +x ./tools/phantomjs/phantomjs
 
 EXPOSE 3000
 
