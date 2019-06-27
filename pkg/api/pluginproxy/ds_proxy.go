@@ -312,8 +312,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 // an index which is matching the index template of the data source.
 // Returns either and error or nil if all indices are matching.
 func (proxy *DataSourceProxy) validateESMappingIndexTemplate() error {
-	// this check applies only to the GET requests to the _mapping API
-	if !(proxy.ctx.Req.Request.Method == "GET" && strings.Contains(proxy.proxyPath, "_mapping")) {
+	// this check applies only to the _mapping API
+	if !(strings.Contains(proxy.proxyPath, "_mapping")) {
 		return nil
 	}
 
@@ -342,8 +342,8 @@ func (proxy *DataSourceProxy) validateESMappingIndexTemplate() error {
 // requested index matches this template.
 // Returns either and error or nil if all indices are matching.
 func (proxy *DataSourceProxy) validateESSearchIndexTemplate() error {
-	// this check applies only to the POST requests to the _msearch API
-	if !(proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath == "_msearch") {
+	// this check applies only to the _msearch API
+	if !(strings.Contains(proxy.proxyPath, "_msearch")) {
 		return nil
 	}
 
