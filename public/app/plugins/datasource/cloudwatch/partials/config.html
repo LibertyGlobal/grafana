@@ -45,6 +45,7 @@
       </info-popover>
     </div>
   </div>
+
   <div class="gf-form">
     <label class="gf-form-label width-13">Custom Metrics</label>
     <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.customMetricsNamespaces' placeholder="Namespace1,Namespace2"></input>
@@ -52,4 +53,14 @@
       Namespaces of Custom Metrics
     </info-popover>
   </div>
+
+  <div class="gf-form">
+    <label class="gf-form-label width-13">Proxy URL</label>
+    <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.proxy' placeholder=""></input>
+    <info-popover mode="right-absolute">
+      An URL of the HTTP proxy server which should be used to access the CloudWatch API. Leave empty for direct connection.
+      You can also use HTTPS_PROXY environment variable to set the proxy globally.
+    </info-popover>
+  </div>
+
 </div>
