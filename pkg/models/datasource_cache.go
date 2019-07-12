@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -40,6 +41,18 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+func (ds *DataSource) GetProxyURL(req *http.Request) (*url.URL, error) {
+	proxyString := ds.JsonData.Get("proxy").MustString("")
+	if proxyString != "" {
+		//fmt.Printf("DataSource: %s/%s - Got proxy URL: %s", ds.Type, ds.Name, proxyString)
+		proxyUrl, err := url.Parse(proxyString)
+		return proxyUrl, err
+	} else {
+		//fmt.Printf("DataSource: %s/%s - Using default proxy settings", ds.Type, ds.Name)
+		return http.ProxyFromEnvironment(req)
+	}
+}
+
 func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -57,7 +70,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
+		Proxy:           ds.GetProxyURL,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
