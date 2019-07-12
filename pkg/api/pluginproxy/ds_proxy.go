@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -255,6 +256,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	if proxy.ds.Type == m.DS_ES {
+		logger.Debug("ES datasource: entering validation")
+
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -264,7 +267,30 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
 			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
+
+		var err error
+		err = proxy.validateESSearchIndexTemplate()
+		if err != nil {
+			logger.Debug("ES datasource: search validation have failed", "error", err)
+			return err
+		}
+
+		err = proxy.validateESMappingIndexTemplate()
+		if err != nil {
+			logger.Debug("ES datasource: mapping validation have failed", "error", err)
+			return err
+		}
+
+		logger.Debug("ES datasource: validation is success")
 	}
+
+	err := proxy.checkUserTeamDatasourceAccess()
+	if err != nil {
+		logger.Debug("ES datasource: team access have failed", "error", err)
+		return err
+	}
+
+	logger.Debug("ES datasource: access is success")
 
 	// found route if there are any
 	if len(proxy.plugin.Routes) > 0 {
@@ -288,6 +314,245 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
+}
+
+// Validates that the ElasticSearch mapping request have been sent to
+// an index which is matching the index template of the data source.
+// Returns either and error or nil if all indices are matching.
+func (proxy *DataSourceProxy) validateESMappingIndexTemplate() error {
+	logger.Debug("Call: validateESMappingIndexTemplate")
+
+	// this check applies only to the _mapping API
+	if !(strings.Contains(proxy.proxyPath, "_mapping")) {
+		return nil
+	}
+
+	logger.Debug(fmt.Sprintf("Check if request path: '%s' matches the datasource pattern", proxy.proxyPath))
+	proxyPathParts := strings.Split(proxy.proxyPath, "/")
+	logger.Debug(fmt.Sprintf("Got proxy path parts: '%s'", strings.Join(proxyPathParts, ",")))
+
+	if len(proxyPathParts) > 1 {
+		indexNames := proxyPathParts[0:1]
+		logger.Debug(fmt.Sprintf("The index name part is: '%s'", strings.Join(indexNames, ",")))
+		err := proxy.checkIndicesMatchTemplate(indexNames)
+		if err != nil {
+			logger.Debug("The mapping match have failed", "error", err)
+			return err
+		}
+	} else {
+		logger.Debug("The request does not contain the index part, check is success")
+	}
+
+	return nil
+}
+
+// Validates that all of the ElasticSearch msearch requests contains indices
+// which are match the index template specified in the datasource settings
+// It extracts the base part of the index template and checks if every
+// requested index matches this template.
+// Returns either and error or nil if all indices are matching.
+func (proxy *DataSourceProxy) validateESSearchIndexTemplate() error {
+	logger.Debug("Call: validateESSearchIndexTemplate")
+
+	// this check applies only to the _msearch API
+	if !(strings.Contains(proxy.proxyPath, "_msearch")) {
+		return nil
+	}
+
+	requestBodyBytes, err := ioutil.ReadAll(proxy.ctx.Req.Request.Body)
+	if err != nil {
+		logger.Error("Could not read the request body during validation", "error", err)
+		return err
+	}
+	proxy.ctx.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(requestBodyBytes))
+
+	requestBodyString := string(requestBodyBytes)
+	logger.Debug(fmt.Sprintf("Processing full request body: '%s'", strings.Replace(requestBodyString, "\n", "\\n", -1)))
+
+	requestBodyParts := strings.Split(strings.Replace(requestBodyString, "\r\n", "\n", -1), "\n")
+	logger.Debug(fmt.Sprintf("Got '%d' request body parts after splitting: '%s'", len(requestBodyParts), strings.Join(requestBodyParts, "|")))
+
+	for _, requestBody := range requestBodyParts {
+		err = proxy.checkRequestMatchTemplate(requestBody)
+		if err != nil {
+			logger.Debug("Search request validation have failed", "error", err)
+			return err
+		}
+	}
+
+	return err
+}
+
+// Check if a single JSON request matches the index pattern
+func (proxy *DataSourceProxy) checkRequestMatchTemplate(requestBody string) error {
+	logger.Debug(fmt.Sprintf("Processing request body part: '%s'", requestBody))
+	if len(requestBody) == 0 {
+		logger.Debug("Request body part is empty, check is success")
+		return nil
+	}
+
+	requestJson, err := simplejson.NewJson([]byte(requestBody))
+	if err != nil {
+		logger.Debug("Request body part is broken, check is failure", "error", err)
+		return err
+	}
+
+	requestIndices := make([]string, 0)
+
+	_, err = requestJson.Get("index").StringArray()
+	if err == nil {
+		jsonIndices, err := requestJson.Get("index").StringArray()
+		if err == nil && len(jsonIndices) > 0 {
+			logger.Debug(fmt.Sprintf("Adding indices to the list: '%s'", strings.Join(jsonIndices, ",")))
+			requestIndices = append(requestIndices, jsonIndices...)
+		}
+	} else {
+		jsonIndex, err := requestJson.Get("index").String()
+		if err == nil && len(jsonIndex) > 0 {
+			logger.Debug(fmt.Sprintf("Adding index to the list: '%s'", jsonIndex))
+			requestIndices = append(requestIndices, jsonIndex)
+		}
+	}
+
+	logger.Debug(fmt.Sprintf("From this request body part we got '%d' indices: '%s'", len(requestIndices), strings.Join(requestIndices, ",")))
+
+	if len(requestIndices) == 0 {
+		logger.Debug("There are no index names in this request body part, it must be data part, check is success!")
+		return nil
+	}
+
+	return proxy.checkIndicesMatchTemplate(requestIndices)
+}
+
+// Check if an array of index names matches the index pattern
+func (proxy *DataSourceProxy) checkIndicesMatchTemplate(requestIndices []string) error {
+	var templateError error
+	basePart, _, ltr := proxy.getIndexTemplateParts()
+
+	logger.Debug(fmt.Sprintf("Check if the template base part: '%s' is matching the index list: '%s'", basePart, strings.Join(requestIndices, ",")))
+
+	for _, requestIndex := range requestIndices {
+		logger.Debug(fmt.Sprintf("Check if the template base part: '%s' is matching the index: '%s' with left-to-rigth: %t", basePart, requestIndex, ltr))
+
+		if ltr {
+			if !strings.HasPrefix(requestIndex, basePart) {
+				templateError = errors.New(fmt.Sprintf("The request index name: '%s' does not start with: '%s'!", requestIndex, basePart))
+				logger.Debug("No, template doesn't match", "error", templateError)
+				return templateError
+			}
+		} else {
+			if !strings.HasSuffix(requestIndex, basePart) {
+				templateError = errors.New(fmt.Sprintf("The request index name: '%s' does not end with: '%s'!", requestIndex, basePart))
+				logger.Debug("No, template doesn't match", "error", templateError)
+				return templateError
+			}
+		}
+
+		logger.Debug("Yes, template does match")
+	}
+
+	return nil
+}
+
+// Split the index name to the base and date parts
+func (proxy *DataSourceProxy) getIndexTemplateParts() (string, string, bool) {
+	indexInterval := proxy.ds.JsonData.Get("interval").MustString()
+	if indexInterval == "" {
+		return proxy.ds.Database, "", true
+	}
+
+	datePart := ""
+	basePart := ""
+	ltr := false
+
+	if strings.HasPrefix(proxy.ds.Database, "[") {
+		parts := strings.Split(strings.TrimLeft(proxy.ds.Database, "["), "]")
+		basePart = parts[0]
+		if len(parts) == 2 {
+			datePart = parts[1]
+		} else {
+			datePart = basePart
+			basePart = ""
+		}
+		ltr = true
+	} else if strings.HasSuffix(proxy.ds.Database, "]") {
+		parts := strings.Split(strings.TrimRight(proxy.ds.Database, "]"), "[")
+		datePart = parts[0]
+		if len(parts) == 2 {
+			basePart = parts[1]
+		} else {
+			basePart = ""
+		}
+		ltr = false
+	}
+
+	return basePart, datePart, ltr
+}
+
+// Check if a currently logged in user has access to this datasource
+// If any of the user's groups match the list of allowed groups defined
+// in this datasource's configuration or there are no allowed groups defined
+// the access for the user is granted.
+// Returns error or nil if access is allowed
+func (proxy *DataSourceProxy) checkUserTeamDatasourceAccess() error {
+	logger.Debug("Call: checkUserTeamDatasourceAccess")
+
+	if proxy.ctx.IsAnonymous {
+		logger.Debug("Anonymouse access is used, check is success")
+		return nil
+	}
+
+	if proxy.ctx.OrgRole == m.ROLE_ADMIN || proxy.ctx.IsGrafanaAdmin {
+		logger.Debug(fmt.Sprintf("User: '%s' is admin, check is success", proxy.ctx.Login))
+		return nil
+	}
+
+	allowedTeams := proxy.ds.JsonData.Get("allowedTeams").MustString("")
+	if len(allowedTeams) == 0 {
+		logger.Debug(fmt.Sprintf("There are no allowed teams specified for the datasource: '%s', check is success", proxy.ds.Name))
+		return nil
+	}
+
+	allowedTeamsList := strings.Split(allowedTeams, ",")
+	for i := 0; i < len(allowedTeamsList); i++ {
+		allowedTeamsList[i] = strings.TrimSpace(allowedTeamsList[i])
+	}
+
+	logger.Debug(fmt.Sprintf("Got allowed teams: '%s' for the datasource: '%s'", strings.Join(allowedTeamsList, ","), proxy.ds.Name))
+
+	userTeams, err := proxy.getUserTeams()
+	if err != nil {
+		logger.Debug(fmt.Sprintf("Error getting the list of user: '%s' teams", proxy.ctx.Login), "error", err)
+		return err
+	}
+
+	for _, allowedTeam := range allowedTeamsList {
+		if proxy.checkUserHasTeam(userTeams, allowedTeam) {
+			logger.Debug(fmt.Sprintf("The allowed team: '%s' of the user: '%s' matches the user team for the datasource: '%s', check is success", allowedTeam, proxy.ctx.Login, proxy.ds.Name))
+			return nil
+		}
+	}
+
+	return errors.New(fmt.Sprintf("The user: '%s' has no access to the datasource: '%s' with allowed teams: '%s'", proxy.ctx.Login, proxy.ds.Name, strings.Join(allowedTeamsList, ",")))
+}
+
+// Check if there is a specified team name in the provided list of user's teams
+func (proxy *DataSourceProxy) checkUserHasTeam(userTeams []*m.TeamDTO, teamName string) bool {
+	for _, userTeam := range userTeams {
+		if userTeam.Name == teamName {
+			// user has a team with a matching name
+			return true
+		}
+	}
+	// no matching teams found
+	return false
+}
+
+// Get the list of user's teams from the database
+func (proxy *DataSourceProxy) getUserTeams() ([]*m.TeamDTO, error) {
+	query := m.GetTeamsByUserQuery{OrgId: proxy.ctx.OrgId, UserId: proxy.ctx.UserId}
+	err := bus.Dispatch(&query)
+	return query.Result, err
 }
 
 func (proxy *DataSourceProxy) logRequest() {
