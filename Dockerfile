@@ -95,6 +95,11 @@ COPY --from=js-builder /usr/src/app/tools ./tools
 
 EXPOSE 3000
 
+### Begin adding LGI certificates ###
+COPY ./certificates/* /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+### End adding LGI certificates ###
+
 COPY ./packaging/docker/run.sh /run.sh
 
 USER grafana
