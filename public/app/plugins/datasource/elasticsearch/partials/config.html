@@ -23,6 +23,11 @@
 		<input class="gf-form-input" type="text"  ng-model='ctrl.current.jsonData.timeField' placeholder="" required ng-init=""></input>
 	</div>
 
+  <div class="gf-form max-width-25">
+    <span class="gf-form-label width-9">Allowed Teams</span>
+    <input class="gf-form-input" type="text" ng-model='ctrl.current.jsonData.allowedTeams' placeholder="" ng-init=""></input>
+  </div>
+
 	<div class="gf-form">
     <span class="gf-form-label width-9">Version</span>
     <span class="gf-form-select-wrapper">
@@ -44,3 +49,5 @@
 		</div>
 	</div>
 </div>
+
+<datasource-security-settings current="ctrl.current"></datasource-security-settings>
