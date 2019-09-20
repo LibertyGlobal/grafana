@@ -276,6 +276,12 @@ func (proxy *DataSourceProxy) logRequest() {
 		return
 	}
 
+	if !setting.DataProxyLogAll {
+		if !proxy.ds.JsonData.Get("loggingEnabled").MustBool(false) {
+			return
+		}
+	}
+
 	var body string
 	if proxy.ctx.Req.Request.Body != nil {
 		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Request.Body)
@@ -285,14 +291,23 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
+	dashboardId := proxy.ctx.Req.Header.Get("X-Dashboard-Id")
+	panelId := proxy.ctx.Req.Header.Get("X-Panel-Id")
+
 	logger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserId,
 		"orgid", proxy.ctx.OrgId,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
+		"name", proxy.ds.Name,
 		"uri", proxy.ctx.Req.RequestURI,
 		"method", proxy.ctx.Req.Request.Method,
-		"body", body)
+		"refer", proxy.ctx.Req.Request.Referer(),
+		"dashboard", dashboardId,
+		"panel", panelId,
+		"body", body,
+	)
+
 }
 
 func checkWhiteList(c *m.ReqContext, host string) bool {
