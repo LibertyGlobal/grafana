@@ -17,3 +17,7 @@
     <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.tsdbResolution" ng-options="v.value as v.name for v in ctrl.tsdbResolutions"></select>
   </span>
 </div>
+
+<datasource-security-settings current="ctrl.current"></datasource-security-settings>
+<datasource-proxy-settings current="ctrl.current"></datasource-proxy-settings>
+<datasource-logging-settings current="ctrl.current"></datasource-logging-settings>

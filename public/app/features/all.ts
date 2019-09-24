@@ -13,3 +13,7 @@ import './teams/CreateTeamCtrl';
 import './profile/all';
 import './datasources/settings/HttpSettingsCtrl';
 import './datasources/settings/TlsAuthSettingsCtrl';
+
+import './datasources/settings/SecuritySettingsCtrl';
+import './datasources/settings/ProxySettingsCtrl';
+import './datasources/settings/LoggingSettingsCtrl';
