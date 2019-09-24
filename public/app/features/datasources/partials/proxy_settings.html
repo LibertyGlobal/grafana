@@ -1,0 +1,29 @@
+<div class="gf-form-group">
+  <h3 class="page-heading">Proxy Settings</h3>
+
+  <div class="gf-form-inline">
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-10">Proxy URL</span>
+      <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon"
+             ng-model="current.jsonData.proxyURL"
+             placeholder="http://127.0.0.1:3128">
+      </input>
+      <info-popover mode="right-absolute">
+        An URL of the HTTP proxy server which should be used to access this datasource.
+        You can also use HTTPS_PROXY environment variable to set the proxy URL globally.
+      </info-popover>
+    </div>
+  </div>
+
+  <div class="gf-form-group">
+    <div class="gf-form-inline">
+      <gf-form-checkbox class="gf-form"
+                        label="Proxy enabled"
+                        checked="current.jsonData.proxyEnabled"
+                        label-class="width-10"
+                        switch-class="max-width-6">
+      </gf-form-checkbox>
+    </div>
+  </div>
+
+</div>
