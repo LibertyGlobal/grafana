@@ -68,6 +68,11 @@
             <i class="btn-service-icon fa fa-sign-in"></i>
             Sign in with {{oauth.generic_oauth.name}}
           </a>
+          <a class="btn btn-medium btn-service btn-service--rizzo login-btn" href="login/rizzo" target="_self"
+             ng-if="oauth.rizzo">
+            <i class="btn-service-icon"></i>
+            Sign in with {{oauth.rizzo.name}}
+          </a>
         </div>
         <div class="login-signup-box" ng-show="!disableUserSignUp">
           <div class="login-signup-title p-r-1">

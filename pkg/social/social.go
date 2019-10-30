@@ -53,7 +53,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "rizzo"}
 )
 
 func NewOAuthService() {
@@ -191,6 +191,27 @@ func NewOAuthService() {
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
+
+		// Rizzo - Uses the Rizzo UK OAuth scheme
+		if name == "rizzo" {
+			SocialMap["rizzo"] = &SocialRizzoOAuth{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains:       info.AllowedDomains,
+				apiUrl:               info.ApiUrl,
+				allowSignup:          info.AllowSignup,
+				roleSupport:          sec.Key("role_support").MustBool(false),
+				roleAttribute:        sec.Key("role_attribute").MustString("ODH:modem"),
+				deniedRole:			  sec.Key("denied_role").MustString("denied"),
+				viewerRole:			  sec.Key("viewer_role").MustString("readonly"),
+				editorRole:			  sec.Key("editor_role").MustString("readwrite"),
+				adminRole:			  sec.Key("admin_role").MustString("admin"),
+				defaultRole:          sec.Key("default_role").MustString("denied"),
+			}
+		}
+
 	}
 }
 
