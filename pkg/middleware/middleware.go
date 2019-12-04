@@ -120,6 +120,7 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 
 	ctx.IsSignedIn = true
 	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser.Login = "ApiKey_" + apikey.Name
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
