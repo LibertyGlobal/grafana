@@ -280,6 +280,10 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
+	if len(c.SignedInUser.Login) > 7 && c.SignedInUser.Login[:7] == "ApiKey_" {
+		cmd.Message = cmd.Message + c.SignedInUser.Login
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,

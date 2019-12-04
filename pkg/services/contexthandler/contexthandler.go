@@ -185,6 +185,7 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 
 	ctx.IsSignedIn = true
 	ctx.SignedInUser = &models.SignedInUser{}
+	ctx.SignedInUser.Login = "ApiKey_" + apikey.Name
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
