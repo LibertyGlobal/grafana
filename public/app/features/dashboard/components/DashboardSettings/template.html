@@ -70,6 +70,17 @@
 			<select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
 		</div>
 	</div>
+
+	<h5 class="page-heading">Logging Settings</h5>
+	<div class="gf-form">
+		<gf-form-checkbox class="gf-form"
+							label="Logging enabled"
+							checked="current.jsonData.loggingEnabled"
+							label-class="width-10"
+							switch-class="max-width-6">
+		</gf-form-checkbox>
+	</div>
+	
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">

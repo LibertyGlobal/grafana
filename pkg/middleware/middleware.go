@@ -201,6 +201,23 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
 	}
 
+	// Trace User Id - start
+	var maxAge int
+	maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+	maxAge = int(maxAgeHours.Seconds())
+	cookie := http.Cookie{
+		Name:     "X-GrafanaUser-Id",
+		Value:    strconv.FormatInt(ctx.SignedInUser.UserId, 10),
+		HttpOnly: true,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.CookieSecure,
+		MaxAge:   maxAge,
+		SameSite: setting.CookieSameSite,
+	}
+
+	http.SetCookie(ctx.Resp, &cookie)
+	// Trace User Id - end
+
 	return true
 }
 
