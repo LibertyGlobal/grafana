@@ -57,16 +57,24 @@ export class MysqlDatasource {
       return this.$q.when({ data: [] });
     }
 
+    const httpOptions: any = {
+      method: 'POST',
+      url: '/api/tsdb/query',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
+      },
+      headers: {
+      },
+    };
+
+    console.log(options);
+    httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+    httpOptions.headers['X-Panel-Id'] = options.panelId;
+
     return this.backendSrv
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
+      .datasourceRequest(httpOptions)
       .then(this.responseParser.processQueryResult);
   }
 
