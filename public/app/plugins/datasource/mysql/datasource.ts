@@ -69,7 +69,6 @@ export class MysqlDatasource {
       },
     };
 
-    console.log(options);
     httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
     httpOptions.headers['X-Panel-Id'] = options.panelId;
 
