@@ -56,7 +56,7 @@ export class MysqlDatasource {
     if (queries.length === 0) {
       return this.$q.when({ data: [] });
     }
-
+  
     const httpOptions: any = {
       method: 'POST',
       url: '/api/tsdb/query',
