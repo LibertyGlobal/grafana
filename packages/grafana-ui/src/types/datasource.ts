@@ -50,6 +50,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
+  loggingEnabled: boolean;
   scopedVars: object;
 }
 

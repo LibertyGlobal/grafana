@@ -36,6 +36,7 @@ export interface Props {
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
   onError: (message: string, error: DataQueryError) => void;
+  loggingEnabled?: boolean;
 }
 
 export interface State {
@@ -97,6 +98,7 @@ export class DataPanel extends Component<Props, State> {
       maxDataPoints,
       onDataResponse,
       onError,
+      loggingEnabled,
     } = this.props;
 
     if (!isVisible) {
@@ -127,6 +129,7 @@ export class DataPanel extends Component<Props, State> {
         intervalMs: intervalRes.intervalMs,
         targets: queries,
         maxDataPoints: maxDataPoints || widthPixels,
+        loggingEnabled: loggingEnabled,
         scopedVars: {},
         cacheTimeout: null,
       };

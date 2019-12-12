@@ -18,6 +18,7 @@ export function getQueryOptions<TQuery extends DataQuery>(
     interval: '60s',
     intervalMs: 60000,
     maxDataPoints: 500,
+    loggingEnabled: false,
   };
 
   Object.assign(defaults, options);

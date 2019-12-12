@@ -181,6 +181,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             refreshCounter={refreshCounter}
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
+            loggingEnabled={this.props.dashboard.loggingEnabled}
           >
             {({ loading, panelData }) => {
               return this.renderPanelPlugin(loading, panelData, width, height);
