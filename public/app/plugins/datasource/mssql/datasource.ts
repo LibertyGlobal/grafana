@@ -56,17 +56,25 @@ export class MssqlDatasource {
       return this.$q.when({ data: [] });
     }
 
-    return this.backendSrv
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .then(this.responseParser.processQueryResult);
+    const httpOptions: any = {
+      method: 'POST',
+      url: '/api/tsdb/query',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
+      },
+      headers: {},
+    };
+
+    if (typeof options.dashboardId !== 'undefined') {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+    }
+    if (typeof options.panelId !== 'undefined') {
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
+
+    return this.backendSrv.datasourceRequest(httpOptions).then(this.responseParser.processQueryResult);
   }
 
   annotationQuery(options) {

@@ -43,7 +43,7 @@ export class ElasticDatasource {
       url: this.url + '/' + url,
       method: method,
       data: data,
-      headers: {}
+      headers: {},
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -55,8 +55,12 @@ export class ElasticDatasource {
       };
     }
 
-    options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
-    options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
     return this.backendSrv.datasourceRequest(options);
   }
 
@@ -252,8 +256,8 @@ export class ElasticDatasource {
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    this.grafanaDashboardId  = options.dashboardId;
-    this.grafanaPanelId      = options.panelId;
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
 
     for (let i = 0; i < options.targets.length; i++) {
       target = options.targets[i];

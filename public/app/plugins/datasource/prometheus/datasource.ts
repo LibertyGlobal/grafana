@@ -61,7 +61,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
-      headers: {}
+      headers: {},
     });
 
     if (options.method === 'GET') {
@@ -92,8 +92,12 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
         Authorization: this.basicAuth,
       };
     }
-    options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
-    options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
 
     return this.backendSrv.datasourceRequest(options);
   }
@@ -129,8 +133,8 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     const activeTargets = [];
 
     console.log(options);
-    this.grafanaDashboardId  = options.dashboardId;
-    this.grafanaPanelId      = options.panelId;
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
 
     options = _.clone(options);
 
