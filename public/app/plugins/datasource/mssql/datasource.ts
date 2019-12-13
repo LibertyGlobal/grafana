@@ -67,11 +67,13 @@ export class MssqlDatasource {
       headers: {},
     };
 
-    if (typeof options.dashboardId !== 'undefined') {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
-    }
-    if (typeof options.panelId !== 'undefined') {
-      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    if (typeof options.loggingEnabled !== 'undefined' && options.loggingEnabled) {
+        if (typeof options.dashboardId !== 'undefined') {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      }
+      if (typeof options.panelId !== 'undefined') {
+        httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
     }
 
     return this.backendSrv.datasourceRequest(httpOptions).then(this.responseParser.processQueryResult);

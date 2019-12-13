@@ -17,4 +17,3 @@ import './datasources/settings/TlsAuthSettingsCtrl';
 import './datasources/settings/SecuritySettingsCtrl';
 import './datasources/settings/ProxySettingsCtrl';
 import './datasources/settings/LoggingSettingsCtrl';
-import './dashboard/components/DashboardSettings/LoggingSettingsCtrl';

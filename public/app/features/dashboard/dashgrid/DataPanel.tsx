@@ -134,6 +134,8 @@ export class DataPanel extends Component<Props, State> {
         cacheTimeout: null,
       };
 
+      console.log('-----------------------');
+      console.log(queryOptions);
       const resp = await ds.query(queryOptions);
 
       if (this.isUnmounted) {

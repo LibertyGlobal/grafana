@@ -256,8 +256,10 @@ export class ElasticDatasource {
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    this.grafanaDashboardId = options.dashboardId;
-    this.grafanaPanelId = options.panelId;
+    if (typeof options.loggingEnabled !== 'undefined' && options.loggingEnabled) {
+      this.grafanaDashboardId = options.dashboardId;
+      this.grafanaPanelId = options.panelId;
+    }
 
     for (let i = 0; i < options.targets.length; i++) {
       target = options.targets[i];

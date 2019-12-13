@@ -165,8 +165,8 @@ class MetricsPanelCtrl extends PanelCtrl {
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
       cacheTimeout: this.panel.cacheTimeout,
+      loggingEnabled: this.dashboard.loggingEnabled
     };
-
     return datasource.query(metricsQuery);
   }
 
