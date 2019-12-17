@@ -61,7 +61,8 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole m.RoleType `toml:"org_role"`
+	OrgRole  m.RoleType `toml:"org_role"`
+	TeamName string     `toml:"team_name"`
 }
 
 // logger for all LDAP stuff
