@@ -105,6 +105,12 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		return err
 	}
 
+	err = syncOrgTeams(cmd.Result, extUser)
+
+	if err != nil {
+		return err
+	}
+
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
 		if err := ls.Bus.Dispatch(&models.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
@@ -184,11 +190,95 @@ func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
 	return bus.Dispatch(updateCmd)
 }
 
+func syncOrgTeams(user *models.User, extUser *models.ExternalUserInfo) error {
+	// don't sync org teams if none are specified
+	if len(extUser.OrgTeams) == 0 {
+		return nil
+	}
+
+	logger.Debug("Syncing OrgTeams", "login", user.Login, "external", extUser.OrgTeams)
+
+	// query existing teams of a user
+	teamsQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.Id}
+	if err := bus.Dispatch(teamsQuery); err != nil {
+		log.Error(3, "Could not query the list of user's teams", err)
+	}
+
+	// find team id which are no longer present in external user data and should be removed
+	deleteTeamIds := []int64{}
+	for _, existingUserTeam := range teamsQuery.Result {
+		userTeamStillAssigned := false
+		for _, extTeam := range extUser.OrgTeams[user.OrgId] {
+			if existingUserTeam.Name == extTeam {
+				userTeamStillAssigned = true
+			}
+		}
+		if !userTeamStillAssigned {
+			deleteTeamIds = append(deleteTeamIds, existingUserTeam.Id)
+		}
+	}
+	logger.Debug("Syncing OrgTeams", "login", user.Login, "deleteTeamIds", deleteTeamIds)
+
+	// go through the found ids and remove them from user's team membership
+	for _, deleteTeamId := range deleteTeamIds {
+		err := bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: user.OrgId, TeamId: deleteTeamId, UserId: user.Id})
+		if err != nil {
+			log.Error(3, "Could not remove user from a team", err)
+		}
+	}
+
+	// find the list of team names which are present in the external user data, but are not assigned to the user yet
+	assignTeamNames := []string{}
+	for _, extTeam := range extUser.OrgTeams[user.OrgId] {
+		extTeamAlreadyAssigned := false
+		for _, existingUserTeam := range teamsQuery.Result {
+			if existingUserTeam.Name == extTeam {
+				extTeamAlreadyAssigned = true
+			}
+		}
+		if !extTeamAlreadyAssigned {
+			assignTeamNames = append(assignTeamNames, extTeam)
+		}
+	}
+	logger.Debug("Syncing OrgTeams", "login", user.Login, "assignTeamNames", assignTeamNames)
+
+	// search every external team name and get the list of team ids if the external team is found
+	assignTeamIds := []int64{}
+	for _, assignTeamName := range assignTeamNames {
+		teamSearchQuery := &models.SearchTeamsQuery{
+			OrgId: user.OrgId,
+			Name:  assignTeamName,
+		}
+		err := bus.Dispatch(teamSearchQuery)
+		if err != nil {
+			log.Error(3, "Could not remove user from a team", err)
+		}
+		if teamSearchQuery.Result.TotalCount > 0 {
+			assignTeamIds = append(assignTeamIds, teamSearchQuery.Result.Teams[0].Id)
+		} else {
+			logger.Debug("Syncing OrgTeams", "login", user.Login, "can't find team", assignTeamName)
+		}
+	}
+	logger.Debug("Syncing OrgTeams", "login", user.Login, "assignTeamIds", assignTeamIds)
+
+	// go though the list of team ids and add them to the user's membership
+	for _, assignTeamId := range assignTeamIds {
+		err := bus.Dispatch(&models.AddTeamMemberCommand{OrgId: user.OrgId, TeamId: assignTeamId, UserId: user.Id, External: true})
+		if err != nil {
+			log.Error(3, "Could not add user to a team", err)
+		}
+	}
+
+	return nil
+}
+
 func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	// don't sync org roles if none are specified
 	if len(extUser.OrgRoles) == 0 {
 		return nil
 	}
+
+	logger.Debug("Syncing OrgRoles", "login", user.Login, "external", extUser.OrgRoles)
 
 	orgsQuery := &models.GetUserOrgListQuery{UserId: user.Id}
 	if err := bus.Dispatch(orgsQuery); err != nil {
@@ -199,6 +289,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	deleteOrgIds := []int64{}
 
 	// update existing org roles
+	logger.Debug("Syncing OrgRoles - 1")
 	for _, org := range orgsQuery.Result {
 		handledOrgIds[org.OrgId] = true
 
@@ -214,6 +305,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	// add any new org roles
+	logger.Debug("Syncing OrgRoles - 2")
 	for orgId, orgRole := range extUser.OrgRoles {
 		if _, exists := handledOrgIds[orgId]; exists {
 			continue
@@ -228,6 +320,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	// delete any removed org roles
+	logger.Debug("Syncing OrgRoles - 3")
 	for _, orgId := range deleteOrgIds {
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
 		err := bus.Dispatch(cmd)
@@ -241,6 +334,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	// update user's default org if needed
+	logger.Debug("Syncing OrgRoles - 4")
 	if _, ok := extUser.OrgRoles[user.OrgId]; !ok {
 		for orgId := range extUser.OrgRoles {
 			user.OrgId = orgId
@@ -252,6 +346,6 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 			OrgId:  user.OrgId,
 		})
 	}
-
+	logger.Debug("Syncing OrgRoles - 5")
 	return nil
 }
