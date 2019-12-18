@@ -216,6 +216,16 @@ $btn-service-icon-width: 35px;
   }
 }
 
+.btn-service--rizzo {
+  .btn-service-icon {
+    background-image: url(/public/img/rizzo_virginmedia_icon.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 95%;
+    width: 60px;
+  }
+}
+
 //Toggle button
 
 .toggle-btn {
