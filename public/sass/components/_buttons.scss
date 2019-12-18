@@ -216,6 +216,19 @@ $btn-service-icon-width: 35px;
   }
 }
 
+.btn-service--rizzo {
+  background-color: #322332;
+  border: 1px solid #393939;
+
+  .btn-service-icon {
+    background-image: url(/public/img/rizzo_virginmedia_icon.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 85%;
+    width: 60px;
+  }
+}
+
 //Toggle button
 
 .toggle-btn {

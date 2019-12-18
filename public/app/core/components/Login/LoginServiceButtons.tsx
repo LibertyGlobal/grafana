@@ -35,6 +35,11 @@ const loginServices: () => LoginServices = () => {
       icon: 'sign-in',
       hrefName: 'generic_oauth',
     },
+    rizzo: {
+      enabled: oauthEnabled && config.oauth.rizzo,
+      name: 'Rizzo',
+      hrefName: 'rizzo',
+    },
   };
 };
 

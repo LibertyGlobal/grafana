@@ -191,6 +191,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 	}
 
+	if len(userInfo.Groups) > 0 {
+		extUser.OrgTeams[1] = userInfo.Groups
+	}
+
 	// add/update user in grafana
 	cmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
