@@ -247,3 +247,25 @@ type ValidateDashboardAlertsCommand struct {
 	Dashboard *Dashboard
 	User      *SignedInUser
 }
+
+type AlertTopDTO struct {
+	Id            int64  `json:"id"`
+	Name          string `json:"name"`
+	AlertCount    int64  `json:"alertCount"`
+	LatestAlert   int64  `json:"latestAlert"`
+	DashboardId   int64  `json:"dashboardId"`
+	DashboardUid  string `json:"dashboardUid"`
+	DashboardSlug string `json:"dashboardSlug"`
+	PanelId       int64  `json:"panelId"`
+	Url           string `json:"url"`
+}
+
+type GetAlertTopQuery struct {
+	From        int64
+	To          int64
+	OrgId       int64
+	DashboardId int64
+	Limit       int64
+
+	Result []*AlertTopDTO
+}
