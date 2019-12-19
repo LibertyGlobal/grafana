@@ -15,14 +15,20 @@ const (
 
 // NotifierBase is the base implementation of a notifier.
 type NotifierBase struct {
-	Name                  string
-	Type                  string
-	UID                   string
-	IsDeault              bool
-	UploadImage           bool
-	SendReminder          bool
-	DisableResolveMessage bool
-	Frequency             time.Duration
+	Name        string
+	Type        string
+	UID         string
+	IsDefault   bool
+	UploadImage bool
+
+	SendReminder bool
+	Frequency    time.Duration
+
+	DisableResolveMessage  bool
+	DisableAlertingMessage bool
+	DisableNoDataMessage   bool
+	DisableUnknownMessage  bool
+	DisablePendingMessage  bool
 
 	log log.Logger
 }
@@ -36,15 +42,19 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 
 	return NotifierBase{
-		UID:                   model.Uid,
-		Name:                  model.Name,
-		IsDeault:              model.IsDefault,
-		Type:                  model.Type,
-		UploadImage:           uploadImage,
-		SendReminder:          model.SendReminder,
-		DisableResolveMessage: model.DisableResolveMessage,
-		Frequency:             model.Frequency,
-		log:                   log.New("alerting.notifier." + model.Name),
+		UID:                    model.Uid,
+		Name:                   model.Name,
+		IsDefault:              model.IsDefault,
+		Type:                   model.Type,
+		UploadImage:            uploadImage,
+		SendReminder:           model.SendReminder,
+		DisableResolveMessage:  model.DisableResolveMessage,
+		DisableAlertingMessage: model.DisableAlertingMessage,
+		DisableNoDataMessage:   model.DisableNoDataMessage,
+		DisableUnknownMessage:  model.DisableUnknownMessage,
+		DisablePendingMessage:  model.DisablePendingMessage,
+		Frequency:              model.Frequency,
+		log:                    log.New("alerting.notifier." + model.Name),
 	}
 }
 
@@ -101,6 +111,26 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 		}
 	}
 
+	// Do not notify when state is Alerting if DisableAlertingMessage is set to true
+	if newState == models.AlertStateAlerting && n.DisableAlertingMessage {
+		return false
+	}
+
+	// Do not notify when state is NoData if DisableNoDataMessage is set to true
+	if newState == models.AlertStateNoData && n.DisableNoDataMessage {
+		return false
+	}
+
+	// Do not notify when state is Unknown if DisableUnknownMessage is set to true
+	if newState == models.AlertStateUnknown && n.DisableUnknownMessage {
+		return false
+	}
+
+	// Do not notify when state is Pending if DisablePendingMessage is set to true
+	if newState == models.AlertStatePending && n.DisablePendingMessage {
+		return false
+	}
+
 	// Do not notify when state is OK if DisableResolveMessage is set to true
 	if newState == models.AlertStateOK && n.DisableResolveMessage {
 		return false
@@ -127,7 +157,7 @@ func (n *NotifierBase) GetNotifierUID() string {
 // GetIsDefault returns true if the notifiers should
 // be used for all alerts.
 func (n *NotifierBase) GetIsDefault() bool {
-	return n.IsDeault
+	return n.IsDefault
 }
 
 // GetSendReminder returns true if reminders should be sent.
@@ -139,6 +169,26 @@ func (n *NotifierBase) GetSendReminder() bool {
 // should be skipped.
 func (n *NotifierBase) GetDisableResolveMessage() bool {
 	return n.DisableResolveMessage
+}
+
+// GetDisableAlertingMessage - Disable Alerting
+func (n *NotifierBase) GetDisableAlertingMessage() bool {
+	return n.DisableAlertingMessage
+}
+
+// GetDisableNoDataMessage - Disable on No data
+func (n *NotifierBase) GetDisableNoDataMessage() bool {
+	return n.DisableNoDataMessage
+}
+
+// GetDisableUnknownMessage - Disable on Unknown
+func (n *NotifierBase) GetDisableUnknownMessage() bool {
+	return n.DisableUnknownMessage
+}
+
+// GetDisablePendingMessage - Disable on Pending
+func (n *NotifierBase) GetDisablePendingMessage() bool {
+	return n.DisablePendingMessage
 }
 
 // GetFrequency returns the freqency for how often
