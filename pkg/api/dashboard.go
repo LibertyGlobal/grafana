@@ -235,6 +235,14 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
 	}
 
+	if len(c.SignedInUser.Login) > 7 && c.SignedInUser.Login[:7] == "ApiKey_" {
+		msgSep := " "
+		if len(cmd.Message) == 0 {
+			msgSep = ""
+		}
+		cmd.Message = cmd.Message + msgSep + c.SignedInUser.Login
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
