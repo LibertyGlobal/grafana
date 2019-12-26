@@ -1,0 +1,38 @@
+<div class="gf-form-group">
+  <h3 class="page-heading">Security Settings</h3>
+
+  <div class="gf-form-inline">
+    <gf-form-checkbox class="gf-form"
+                      label="Audit enabled"
+                      checked="current.jsonData.loggingEnabled"
+                      label-class="width-10"
+                      switch-class="max-width-6">
+    </gf-form-checkbox>
+  </div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-10">Allowed teams</span>
+      <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon"
+             ng-model="current.jsonData.allowedTeams"
+             placeholder="List of teams">
+      </input>
+      <info-popover mode="right-absolute">
+        A comma-separated list of the user teams which are allowed to use this datasource.
+        An empty list means that all users are allowed.
+      </info-popover>
+    </div>
+  </div>
+
+  <div class="gf-form-group">
+    <div class="gf-form-inline">
+      <gf-form-checkbox class="gf-form"
+                        label="Allow all users"
+                        checked="current.jsonData.allowedAll"
+                        label-class="width-10"
+                        switch-class="max-width-6">
+      </gf-form-checkbox>
+    </div>
+  </div>
+
+</div>
