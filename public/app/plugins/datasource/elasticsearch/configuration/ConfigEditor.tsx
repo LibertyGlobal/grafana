@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceProxySettings, DataSourceSecuritySettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
@@ -46,6 +47,10 @@ export const ConfigEditor = (props: Props) => {
           })
         }
       />
+
+      <DataSourceProxySettings dataSourceConfig={options} onChange={onOptionsChange} />
+
+      <DataSourceSecuritySettings dataSourceConfig={options} onChange={onOptionsChange} />
     </>
   );
 };
