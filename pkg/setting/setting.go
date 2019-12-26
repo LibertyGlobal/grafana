@@ -89,6 +89,8 @@ var (
 	RouterLogging      bool
 	DataProxyLogging   bool
 	DataProxyTimeout   int
+	DataProxyLogAll    bool
+	DataProxyLogJSON   bool
 	StaticRootPath     string
 	EnableGzip         bool
 	EnforceDomain      bool
@@ -268,7 +270,11 @@ type Cfg struct {
 	SAMLEnabled bool
 
 	// Dataproxy
-	SendUserHeader bool
+	DataProxyLogging bool
+	DataProxyTimeout int
+	DataProxyLogAll  bool
+	DataProxyLogJSON bool
+	SendUserHeader   bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -693,6 +699,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyLogAll = dataproxy.Key("all_datasources").MustBool(false)
+	DataProxyLogJSON = dataproxy.Key("json_logging").MustBool(false)
+	cfg.DataProxyLogging = DataProxyLogging
+	cfg.DataProxyTimeout = DataProxyTimeout
+	cfg.DataProxyLogAll = DataProxyLogAll
+	cfg.DataProxyLogJSON = DataProxyLogJSON
+
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
 	// read security settings

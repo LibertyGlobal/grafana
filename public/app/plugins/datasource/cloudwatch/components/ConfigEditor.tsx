@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { FormLabel, Select, Input, Button } from '@grafana/ui';
+import { FormLabel, Select, Input, Button, Switch } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -231,6 +231,56 @@ export class ConfigEditor extends PureComponent<Props, State> {
     });
   };
 
+  onProxyEnabledChange = (proxyEnabled: boolean) => {
+    this.updateDatasource({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        proxyEnabled,
+      },
+    });
+  };
+
+  onAuditEnabledChange = (auditEnabled: boolean) => {
+    this.updateDatasource({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        auditEnabled,
+      },
+    });
+  };
+
+  onAllowedAllChange = (allowedAll: boolean) => {
+    this.updateDatasource({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        allowedAll,
+      },
+    });
+  };
+
+  onAllowedTeamsChange = (allowedTeams: string) => {
+    this.updateDatasource({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        allowedTeams,
+      },
+    });
+  };
+
+  onProxyURLChange = (proxyURL: string) => {
+    this.updateDatasource({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        proxyURL,
+      },
+    });
+  };
+
   render() {
     const { config, authProviderOptions, regions } = this.state;
 
@@ -381,6 +431,72 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
             </div>
           </div>
+        </div>
+
+        <div className="gf-form-group">
+          <h3 className="page-heading">Proxy Settings</h3>
+
+          <Switch
+            label="Proxy enabled"
+            labelClass="width-10"
+            checked={config.jsonData.proxyEnabled || false}
+            onChange={event => {
+              this.onProxyEnabledChange(event!.currentTarget.checked);
+            }}
+            tooltip="Proxy enabled"
+          />
+
+          <div className="gf-form">
+            <FormLabel className="width-14" tooltip="Enter proxy URL.">
+              Proxy URL
+            </FormLabel>
+            <Input
+              className="width-30"
+              placeholder="http://127.0.0.1:3128"
+              value={config.jsonData.proxyURL || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => this.onProxyURLChange(event.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="gf-form-group">
+          <h3 className="page-heading">Security Settings</h3>
+
+          <Switch
+            label="Audit enabled"
+            labelClass="width-10"
+            checked={config.jsonData.auditEnabled || false}
+            onChange={event => {
+              this.onAuditEnabledChange(event!.currentTarget.checked);
+            }}
+            tooltip="Audit records will be in logs"
+          />
+
+          <div className="gf-form">
+            <FormLabel
+              className="width-14"
+              tooltip="A comma-separated list of the user teams which are allowed to use this datasource.
+    An empty list means that all users are allowed."
+            >
+              Allowed teams
+            </FormLabel>
+            <Input
+              className="width-30"
+              placeholder="List of teams"
+              value={config.jsonData.allowedTeams || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => this.onAllowedTeamsChange(event.target.value)}
+            />
+          </div>
+
+          <Switch
+            label="Allow all users"
+            labelClass="width-10"
+            checked={config.jsonData.allowedAll || false}
+            onChange={event => {
+              this.onAllowedAllChange(event!.currentTarget.checked);
+            }}
+            tooltip="Allow all users"
+          />
         </div>
       </>
     );
