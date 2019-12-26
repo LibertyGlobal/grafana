@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,6 +58,19 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+func (ds *DataSource) GetProxyURL(req *http.Request) (*url.URL, error) {
+	proxyEnabled := ds.JsonData.Get("proxyEnabled").MustBool(false)
+	proxyURL := ds.JsonData.Get("proxyURL").MustString("")
+	if proxyEnabled && proxyURL != "" {
+		log.Debug("DataSource: %s/%s - Got proxy URL: %s", ds.Type, ds.Name, proxyURL)
+		proxyUrl, err := url.Parse(proxyURL)
+		return proxyUrl, err
+	} else {
+		log.Debug("DataSource: %s/%s - Using default proxy settings", ds.Type, ds.Name)
+		return http.ProxyFromEnvironment(req)
+	}
+}
+
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -75,7 +90,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	customHeaders := ds.getCustomHeaders()
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
+		Proxy:           ds.GetProxyURL,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,

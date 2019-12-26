@@ -1,6 +1,8 @@
 import React from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceProxySettings } from '@grafana/ui';
+import { DataSourceSecuritySettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
 import { MaxLinesField } from './MaxLinesField';
 import { DerivedFields } from './DerivedFields';
@@ -50,6 +52,11 @@ export const ConfigEditor = (props: Props) => {
         value={options.jsonData.derivedFields}
         onChange={value => onOptionsChange(setDerivedFields(options, value))}
       />
+
+      <DataSourceProxySettings dataSourceConfig={options} onChange={onOptionsChange} />
+
+      <DataSourceSecuritySettings dataSourceConfig={options} onChange={onOptionsChange} />
+
     </>
   );
 };

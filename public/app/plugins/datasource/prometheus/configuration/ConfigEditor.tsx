@@ -1,5 +1,7 @@
 import React from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceProxySettings } from '@grafana/ui';
+import { DataSourceSecuritySettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { PromSettings } from './PromSettings';
 import { PromOptions } from '../types';
@@ -16,6 +18,10 @@ export const ConfigEditor = (props: Props) => {
       />
 
       <PromSettings value={options} onChange={onOptionsChange} />
+
+      <DataSourceProxySettings dataSourceConfig={options} onChange={onOptionsChange} />
+
+      <DataSourceSecuritySettings dataSourceConfig={options} onChange={onOptionsChange} />
     </>
   );
 };

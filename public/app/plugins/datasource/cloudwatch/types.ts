@@ -20,6 +20,11 @@ export interface CloudWatchJsonData extends DataSourceJsonData {
   assumeRoleArn?: string;
   database?: string;
   customMetricsNamespaces?: string;
+  allowedTeams?: string;
+  auditEnabled?: boolean;
+  allowedAll?: boolean;
+  proxyEnabled?: boolean;
+  proxyURL?: string;
 }
 
 export interface CloudWatchSecureJsonData {

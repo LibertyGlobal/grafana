@@ -9,3 +9,14 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   showAccessOptions?: boolean;
 }
+
+export interface ProxySettingsProps extends HttpSettingsBaseProps {
+  proxyURL?: string;
+  proxyEnabled?: boolean;
+}
+
+export interface SecuritySettingsProps extends HttpSettingsBaseProps {
+  auditEnabled?: boolean;
+  allowedTeams?: string;
+  allowedAll?: boolean;
+}
