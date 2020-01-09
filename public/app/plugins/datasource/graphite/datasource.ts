@@ -84,6 +84,10 @@ export class GraphiteDatasource {
     };
 
     this.addTracingHeaders(httpOptions, options);
+    if (typeof options.loggingEnabled !== 'undefined' && options.loggingEnabled) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
 
     if (options.panelId) {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;

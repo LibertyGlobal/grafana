@@ -25,6 +25,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   indexPattern: IndexPattern;
   logMessageField?: string;
   logLevelField?: string;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
 
   /** @ngInject */
   constructor(
@@ -68,6 +70,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       url: this.url + '/' + url,
       method: method,
       data: data,
+      headers: {},
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -77,6 +80,12 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       options.headers = {
         Authorization: this.basicAuth,
       };
+    }
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -313,6 +322,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
+    if (typeof options.loggingEnabled !== 'undefined' && options.loggingEnabled) {
+      this.grafanaDashboardId = options.dashboardId;
+      this.grafanaPanelId = options.panelId;
+    }
+
     let payload = '';
     const targets = _.cloneDeep(options.targets);
     const sentTargets: ElasticsearchQuery[] = [];

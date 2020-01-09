@@ -61,6 +61,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
 
   /** @ngInject */
   constructor(
@@ -134,6 +136,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     if (this.basicAuth) {
       options.headers.Authorization = this.basicAuth;
+    }
+
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -239,6 +248,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   };
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+    if (typeof options.loggingEnabled !== 'undefined' && options.loggingEnabled) {
+      this.grafanaDashboardId = options.dashboardId;
+      this.grafanaPanelId = options.panelId;
+    }
+
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
     const { queries, activeTargets } = this.prepareTargets(options, start, end);

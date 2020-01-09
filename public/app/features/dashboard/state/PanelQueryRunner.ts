@@ -42,6 +42,7 @@ export interface QueryRunnerOptions<
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
   transformations?: DataTransformerConfig[];
+  loggingEnabled?: boolean;
 }
 
 let counter = 100;
@@ -97,6 +98,7 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
+      loggingEnabled,
       // delayStateNotification,
     } = options;
 
@@ -119,6 +121,7 @@ export class PanelQueryRunner {
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
+      loggingEnabled,
     };
 
     // Add deprecated property
