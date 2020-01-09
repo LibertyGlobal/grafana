@@ -62,6 +62,13 @@
 			<select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
 		</div>
 	</div>
+
+	<div class="gf-form">&nbsp;</div>
+	<h5 class="section-heading">Audit Settings</h5>
+	<div class="gf-form">
+		<gf-form-switch class="gf-form" label="Audit" tooltip="Log all datasource queries from this dashboard" checked="ctrl.dashboard.auditEnabled" label-class="width-7">
+	</div>
+
 	<div class="gf-form-button-row">
 	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete" aria-label="Dashboard settings page delete dashboard button">
 		  Delete Dashboard

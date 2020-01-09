@@ -441,6 +441,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+  auditEnabled?: boolean;
 
   // Request Timing
   startTime: number;
