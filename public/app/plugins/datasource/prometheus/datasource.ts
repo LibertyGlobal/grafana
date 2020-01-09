@@ -61,6 +61,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
+  auditEnabled: boolean;
 
   /** @ngInject */
   constructor(
@@ -134,6 +137,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     if (this.basicAuth) {
       options.headers.Authorization = this.basicAuth;
+    }
+
+    if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+      options.headers['X-Audit-Enabled'] = 'true';
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -239,6 +246,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   };
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
+    this.auditEnabled = options.auditEnabled;
+
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
     const { queries, activeTargets } = this.prepareTargets(options, start, end);

@@ -144,6 +144,10 @@ var (
 	LoginCookieName      string
 	LoginMaxLifetimeDays int
 
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
+
 	AnonymousEnabled bool
 	AnonymousOrgName string
 	AnonymousOrgRole string
@@ -263,6 +267,10 @@ type Cfg struct {
 	LoginMaxInactiveLifetimeDays int
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
+
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
 
 	// SAML Auth
 	SAMLEnabled bool
@@ -826,6 +834,15 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
+	}
+
+	tracing := iniFile.Section("tracing")
+	TracingEnabled = tracing.Key("enabled").MustBool(false)
+	cfg.TracingEnabled = TracingEnabled
+	TracingCookieName, err = valueAsString(tracing, "cookie_name", "grafana_user_id")
+	cfg.TracingCookieName = TracingCookieName
+	if err != nil {
+		return err
 	}
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)

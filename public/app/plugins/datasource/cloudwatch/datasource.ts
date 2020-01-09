@@ -44,6 +44,9 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
   debouncedCustomAlert: (title: string, message: string) => void;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
+  auditEnabled: boolean;
 
   /** @ngInject */
   constructor(
@@ -64,6 +67,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
+    this.auditEnabled = options.auditEnabled;
+
     options = angular.copy(options);
 
     const queries = _.filter(options.targets, item => {
@@ -550,11 +557,22 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   awsRequest(url: string, data: any) {
-    const options = {
+    const options: any = {
       method: 'POST',
       url,
       data,
+      headers: {},
     };
+
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
+    if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+      options.headers['X-Audit-Enabled'] = 'true';
+    }
 
     return this.backendSrv.datasourceRequest(options).then((result: any) => {
       return result.data;

@@ -84,6 +84,9 @@ export class GraphiteDatasource {
     };
 
     this.addTracingHeaders(httpOptions, options);
+    if (typeof options.auditEnabled !== 'undefined' && options.auditEnabled) {
+      httpOptions.headers['X-Audit-Enabled'] = "true";
+    }
 
     if (options.panelId) {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
