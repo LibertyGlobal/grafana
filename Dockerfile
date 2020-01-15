@@ -1,7 +1,7 @@
 # Golang build container
 FROM golang:1.13.1-alpine
 
-RUN apk add --no-cache gcc g++
+RUN apk add --no-cache gcc g++ git
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
