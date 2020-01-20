@@ -16,7 +16,7 @@ git rsth v6.5.2
 git cp origin/6.5-ldap-teams
 
 # Rizzo OAuth
-git cp origin/6.5-rizzo-oauth
+git cp origin/6.5-rizzo-oauth2
 
 # Flapping alerts
 git cp origin/6.5-flapping
@@ -31,12 +31,12 @@ git cp origin/6.5-notifications
 git cp origin/6.5-ssl
 
 # Add all datasource features
-git cp origin/6.5-datasource-features
+git cp origin/6.5-datasource-features2
 
 # Add API key audit
 git cp origin/6.5-apikey-track
 
-git cp origin/6.5-dashboard-features
+git cp origin/6.5-dashboard-features2
 
 #git pp origin testing:testing
 
