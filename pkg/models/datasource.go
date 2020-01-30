@@ -24,6 +24,7 @@ const (
 	DS_ACCESS_PROXY  = "proxy"
 	DS_STACKDRIVER   = "stackdriver"
 	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
+	DS_LOKI          = "loki"
 )
 
 var (
@@ -75,6 +76,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_MSSQL:                              true,
 	DS_STACKDRIVER:                        true,
 	DS_AZURE_MONITOR:                      true,
+	DS_LOKI:                               true,
 	"opennms":                             true,
 	"abhisant-druid-datasource":           true,
 	"dalmatinerdb-datasource":             true,
