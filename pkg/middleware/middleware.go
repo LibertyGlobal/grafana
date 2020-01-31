@@ -165,6 +165,26 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
+
+	// Trace User Id - start
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		cookie := http.Cookie{
+			Name:     setting.TracingCookieName,
+			Value:    ctx.SignedInUser.Login,
+			HttpOnly: true,
+			Path:     setting.AppSubUrl + "/",
+			Secure:   setting.CookieSecure,
+			MaxAge:   maxAge,
+			SameSite: setting.CookieSameSite,
+		}
+
+		http.SetCookie(ctx.Resp, &cookie)
+	}
+	// Trace User Id - end
+
 	return true
 }
 
@@ -200,6 +220,25 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 	if rotated {
 		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
 	}
+
+	// Trace User Id - start
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		cookie := http.Cookie{
+			Name:     setting.TracingCookieName,
+			Value:    ctx.SignedInUser.Login,
+			HttpOnly: true,
+			Path:     setting.AppSubUrl + "/",
+			Secure:   setting.CookieSecure,
+			MaxAge:   maxAge,
+			SameSite: setting.CookieSameSite,
+		}
+
+		http.SetCookie(ctx.Resp, &cookie)
+	}
+	// Trace User Id - end
 
 	return true
 }

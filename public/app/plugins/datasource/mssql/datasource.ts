@@ -6,6 +6,9 @@ export class MssqlDatasource {
   name: any;
   responseParser: ResponseParser;
   interval: string;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
+  auditEnabled: boolean;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
@@ -39,6 +42,9 @@ export class MssqlDatasource {
   }
 
   query(options) {
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
+    this.auditEnabled = options.auditEnabled;
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
@@ -56,17 +62,28 @@ export class MssqlDatasource {
       return this.$q.when({ data: [] });
     }
 
-    return this.backendSrv
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .then(this.responseParser.processQueryResult);
+    const httpOptions: any = {
+      method: 'POST',
+      url: '/api/tsdb/query',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
+      },
+      headers: {},
+    };
+
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
+    if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+      options.headers['X-Audit-Enabled'] = 'true';
+    }
+
+    return this.backendSrv.datasourceRequest(httpOptions).then(this.responseParser.processQueryResult);
   }
 
   annotationQuery(options) {

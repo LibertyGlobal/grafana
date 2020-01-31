@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -125,6 +126,10 @@ var (
 	LoginCookieName      string
 	LoginMaxLifetimeDays int
 
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
+
 	AnonymousEnabled bool
 	AnonymousOrgName string
 	AnonymousOrgRole string
@@ -237,6 +242,10 @@ type Cfg struct {
 	LoginMaxInactiveLifetimeDays int
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
+
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
 }
 
 type CommandLineArgs struct {
@@ -673,6 +682,15 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
+	tracing := iniFile.Section("tracing")
+	TracingEnabled = tracing.Key("enabled").MustBool(false)
+	cfg.TracingEnabled = TracingEnabled
+	TracingCookieName, err = valueAsString(tracing, "cookie_name", "grafana_user_name")
+	cfg.TracingCookieName = TracingCookieName
+	if err != nil {
+		return err
+	}
+
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
@@ -838,4 +856,14 @@ func (cfg *Cfg) LogConfigSources() {
 	logger.Info("Path Plugins", "path", PluginsPath)
 	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	logger.Info("App mode " + Env)
+}
+
+func valueAsString(section *ini.Section, keyName string, defaultValue string) (value string, err error) {
+	defer func() {
+		if err_ := recover(); err_ != nil {
+			err = errors.New("Invalid value for key '" + keyName + "' in configuration file")
+		}
+	}()
+
+	return section.Key(keyName).MustString(defaultValue), nil
 }
