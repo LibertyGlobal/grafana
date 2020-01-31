@@ -12,6 +12,9 @@ export default class CloudWatchDatasource {
   defaultRegion: any;
   instanceSettings: any;
   standardStatistics: any;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
+  auditEnabled: boolean;
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
     this.type = 'cloudwatch';
@@ -23,6 +26,9 @@ export default class CloudWatchDatasource {
   }
 
   query(options) {
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
+    this.auditEnabled = options.auditEnabled;
     options = angular.copy(options);
     options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
 
@@ -384,11 +390,22 @@ export default class CloudWatchDatasource {
   }
 
   awsRequest(url, data) {
-    const options = {
+    const options: any = {
       method: 'POST',
       url: url,
       data: data,
+      headers: {},
     };
+
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
+    if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+      options.headers['X-Audit-Enabled'] = 'true';
+    }
 
     return this.backendSrv.datasourceRequest(options).then(result => {
       return result.data;

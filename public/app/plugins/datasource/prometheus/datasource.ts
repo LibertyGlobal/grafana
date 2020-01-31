@@ -33,6 +33,9 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
+  grafanaDashboardId: number;
+  grafanaPanelId: number;
+  auditEnabled: boolean;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
@@ -59,6 +62,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {
@@ -90,6 +94,16 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
       };
     }
 
+    if (typeof this.grafanaDashboardId !== 'undefined') {
+      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+    }
+    if (typeof this.grafanaPanelId !== 'undefined') {
+      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+    }
+    if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+      options.headers['X-Audit-Enabled'] = 'true';
+    }
+
     return this.backendSrv.datasourceRequest(options);
   }
 
@@ -117,6 +131,10 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   }
 
   query(options: DataQueryOptions<PromQuery>) {
+    this.grafanaDashboardId = options.dashboardId;
+    this.grafanaPanelId = options.panelId;
+    this.auditEnabled = options.auditEnabled;
+
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
