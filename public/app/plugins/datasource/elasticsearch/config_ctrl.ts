@@ -25,7 +25,6 @@ export class ElasticConfigCtrl {
     { name: '5.x', value: 5 },
     { name: '5.6+', value: 56 },
     { name: '6.0+', value: 60 },
-    { name: '7.0+', value: 70 }
   ];
 
   indexPatternTypeChanged() {
