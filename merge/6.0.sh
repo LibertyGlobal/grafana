@@ -54,4 +54,13 @@ git cp origin/6.0-datasource-features
 # Add API key audit
 git cp origin/6.0-apikey-track
 
+# Add ES7 support
+git cp origin/6.0-elasticsearch7
+
+# Add feathures for Dashboards (use only after ES7 support)
+# Skip ES7 to ES6
+git cp origin/6.0-dashboard-features2-prepare
+# Update dashboard for datasources + ES7 fix
+git cp origin/6.0-dashboard-features2
+
 #git pp origin testing:testing
