@@ -4,7 +4,6 @@ import moment from 'moment';
 import { ElasticQueryBuilder } from './query_builder';
 import { IndexPattern } from './index_pattern';
 import { ElasticResponse } from './elastic_response';
-import { ElasticsearchOptions } from './types';
 
 export class ElasticDatasource {
   basicAuth: string;
@@ -18,8 +17,6 @@ export class ElasticDatasource {
   maxConcurrentShardRequests: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
-  logMessageField?: string;
-  logLevelField?: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
@@ -28,8 +25,6 @@ export class ElasticDatasource {
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
     this.index = instanceSettings.index;
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-
     this.timeField = instanceSettings.jsonData.timeField;
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
@@ -39,16 +34,6 @@ export class ElasticDatasource {
       timeField: this.timeField,
       esVersion: this.esVersion,
     });
-    this.logMessageField = settingsData.logMessageField || '';
-    this.logLevelField = settingsData.logLevelField || '';
-
-    if (this.logMessageField === '') {
-      this.logMessageField = null;
-    }
-
-    if (this.logLevelField === '') {
-      this.logLevelField = null;
-    }
   }
 
   private request(method, url, data?) {
@@ -249,7 +234,7 @@ export class ElasticDatasource {
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
-    if (this.esVersion >= 56 && this.esVersion < 70) {
+    if (this.esVersion >= 56) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
     return angular.toJson(queryHeader);
@@ -293,20 +278,12 @@ export class ElasticDatasource {
     payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
-    const url = this.getMultiSearchUrl();
-
-    return this.post(url, payload).then((res: any) => {
-      const er = new ElasticResponse(sentTargets, res);
-      if (sentTargets.some(target => target.isLogsQuery)) {
-        return er.getLogs(this.logMessageField, this.logLevelField);
-      }
-
-      return er.getTimeSeries();
+    return this.post('_msearch', payload).then(res => {
+      return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
   }
 
   getFields(query) {
-    const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then(result => {
       const typeMap = {
         float: 'number',
@@ -371,14 +348,8 @@ export class ElasticDatasource {
         const index = result[indexName];
         if (index && index.mappings) {
           const mappings = index.mappings;
-
-          if (configuredEsVersion < 70) {
-            for (const typeName in mappings) {
-              const properties = mappings[typeName].properties;
-              getFieldsRecursively(properties);
-            }
-          } else {
-            const properties = mappings.properties;
+          for (const typeName in mappings) {
+            const properties = mappings[typeName].properties;
             getFieldsRecursively(properties);
           }
         }
@@ -397,13 +368,11 @@ export class ElasticDatasource {
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf().toString());
-    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf().toString());
+    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
+    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
     esQuery = header + '\n' + esQuery + '\n';
 
-    const url = this.getMultiSearchUrl();
-
-    return this.post(url, esQuery).then((res: any) => {
+    return this.post('_msearch?search_type=' + searchType, esQuery).then(res => {
       if (!res.responses[0].aggregations) {
         return [];
       }
@@ -416,14 +385,6 @@ export class ElasticDatasource {
         };
       });
     });
-  }
-
-  getMultiSearchUrl() {
-    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
-      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
-    }
-
-    return '_msearch';
   }
 
   metricFindQuery(query) {
