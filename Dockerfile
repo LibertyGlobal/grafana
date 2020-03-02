@@ -8,6 +8,10 @@ WORKDIR $GOPATH/src/github.com/grafana/grafana
 COPY go.mod go.sum ./
 COPY vendor vendor
 
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
 RUN go mod verify
 
 COPY pkg pkg
@@ -47,6 +51,14 @@ RUN ./node_modules/.bin/grunt build
 FROM alpine:3.10
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
+
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
+LABEL branch="${BUILD_BRANCH}"
+LABEL commit="${BUILD_COMMIT}"
+LABEL timestamp="${BUILD_TIMESTAMP}"
 
 ARG GF_UID="472"
 ARG GF_GID="472"
