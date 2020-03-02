@@ -540,6 +540,10 @@ func setBuildEnv() {
 }
 
 func getGitBranch() string {
+	branch := os.Getenv("BUILD_BRANCH")
+	if branch != "" {
+		return string(branch)
+	}
 	v, err := runError("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return "master"
@@ -548,6 +552,10 @@ func getGitBranch() string {
 }
 
 func getGitSha() string {
+	commit := os.Getenv("BUILD_COMMIT")
+	if commit != "" {
+		return string(commit)
+	}
 	v, err := runError("git", "rev-parse", "--short", "HEAD")
 	if err != nil {
 		return "unknown-dev"
@@ -556,6 +564,11 @@ func getGitSha() string {
 }
 
 func buildStamp() int64 {
+	timestamp := os.Getenv("BUILD_TIMESTAMP")
+	if timestamp != "" {
+		s, _ := strconv.ParseInt(string(timestamp), 10, 64)
+		return s
+	}
 	bs, err := runError("git", "show", "-s", "--format=%ct")
 	if err != nil {
 		return time.Now().Unix()

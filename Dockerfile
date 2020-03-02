@@ -7,6 +7,10 @@ COPY Gopkg.toml Gopkg.lock ./
 COPY vendor vendor
 
 ARG DEP_ENSURE=""
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
 RUN if [ ! -z "${DEP_ENSURE}" ]; then \
       go get -u github.com/golang/dep/cmd/dep && \
       dep ensure --vendor-only; \
@@ -38,6 +42,14 @@ RUN ./node_modules/.bin/grunt build
 
 # Final container
 FROM debian:stretch-slim
+
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
+LABEL branch="${BUILD_BRANCH}"
+LABEL commit="${BUILD_COMMIT}"
+LABEL timestamp="${BUILD_TIMESTAMP}"
 
 ARG GF_UID="472"
 ARG GF_GID="472"
