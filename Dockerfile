@@ -1,5 +1,9 @@
 FROM node:14.15.5-alpine3.13 as js-builder
 
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
@@ -18,6 +22,10 @@ RUN yarn build
 
 FROM golang:1.16.1-alpine3.13 as go-builder
 
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
 RUN apk add --no-cache gcc g++
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
@@ -33,6 +41,14 @@ RUN go run build.go build
 
 # Final stage
 FROM alpine:3.13
+
+ARG BUILD_BRANCH=""
+ARG BUILD_COMMIT=""
+ARG BUILD_TIMESTAMP=""
+
+LABEL branch="${BUILD_BRANCH}"
+LABEL commit="${BUILD_COMMIT}"
+LABEL timestamp="${BUILD_TIMESTAMP}"
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
