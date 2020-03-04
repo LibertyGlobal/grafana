@@ -6,7 +6,9 @@ def run(*args)
 end
 
 task :variables do
-  ENV['DOCKER_BASE'] = "docker.horizon.tv/dataops" unless ENV['DOCKER_BASE']
+  ENV['GRAFANA_VERSION'] = '6.0.2' unless ENV['GRAFANA_VERSION']
+  ENV['GO_PIPELINE_LABEL'] = "dev" unless ENV['GO_PIPELINE_LABEL']
+
   ENV['PROXY_URL'] = "http://172.31.101.80:8888" unless ENV['PROXY_URL']
   ENV['PROXY_EXCLUDE'] = "" unless ENV['PROXY_EXCLUDE']
 
@@ -19,15 +21,12 @@ task :variables do
     exit 1
   end
 
-  ENV['GO_PIPELINE_LABEL'] = 'test' unless ENV['GO_PIPELINE_LABEL']
-  ENV['GO_PIPELINE_NAME'] = 'grafana-6.0' unless ENV['GO_PIPELINE_NAME']
-
-  ENV['GRAFANA_IMAGE'] = "#{ENV['DOCKER_BASE']}/#{ENV['GO_PIPELINE_NAME']}" unless ENV['GRAFANA_IMAGE']
-  ENV['GRAFANA_VERSION'] = "#{ENV['GO_PIPELINE_LABEL']}-#{ENV['BUILD_COMMIT']}" unless ENV['GRAFANA_VERSION']
+  ENV['IMAGE_NAME'] = "docker.horizon.tv/dataops/grafana" unless ENV['IMAGE_NAME']
+  ENV['IMAGE_VERSION'] = "#{ENV['GRAFANA_VERSION']}-#{ENV['GO_PIPELINE_LABEL']}-#{ENV['BUILD_COMMIT']}"
 end
 
 task :build => :variables do
-  puts "* Start building the Grafana image '#{ENV['GRAFANA_IMAGE']}:#{ENV['GRAFANA_VERSION']}'"
+  puts "* Start building the Grafana image '#{ENV['IMAGE_NAME']}:#{ENV['IMAGE_VERSION']}'"
 
   build_args = {
       'HTTP_PROXY' => ENV['PROXY_URL'],
@@ -50,7 +49,7 @@ task :build => :variables do
     cmd << "#{variable}=#{value}"
   end
   cmd << '--tag'
-  cmd << "#{ENV['GRAFANA_IMAGE']}:#{ENV['GRAFANA_VERSION']}"
+  cmd << "#{ENV['IMAGE_NAME']}:#{ENV['IMAGE_VERSION']}"
 
   success = run cmd
   unless success
@@ -60,8 +59,8 @@ task :build => :variables do
 end
 
 task :upload => :build do
-  puts "* Uploading the Grafana image '#{ENV['GRAFANA_IMAGE']}:#{ENV['GRAFANA_VERSION']}'"
-  success = run 'docker', 'push', "#{ENV['GRAFANA_IMAGE']}:#{ENV['GRAFANA_VERSION']}"
+  puts "* Uploading the Grafana image '#{ENV['IMAGE_NAME']}:#{ENV['IMAGE_VERSION']}'"
+  success = run 'docker', 'push', "#{ENV['IMAGE_NAME']}:#{ENV['IMAGE_VERSION']}"
   unless success
     puts "Grafana docker upload have FAILED!"
     exit 1
