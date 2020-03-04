@@ -75,13 +75,13 @@ export class MysqlDatasource {
     };
 
     if (typeof this.grafanaDashboardId !== 'undefined') {
-      options.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
+      httpOptions.headers['X-Dashboard-Id'] = this.grafanaDashboardId;
     }
     if (typeof this.grafanaPanelId !== 'undefined') {
-      options.headers['X-Panel-Id'] = this.grafanaPanelId;
+      httpOptions.headers['X-Panel-Id'] = this.grafanaPanelId;
     }
     if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
-      options.headers['X-Audit-Enabled'] = 'true';
+      httpOptions.headers['X-Audit-Enabled'] = 'true';
     }
 
     return this.backendSrv.datasourceRequest(httpOptions).then(this.responseParser.processQueryResult);
