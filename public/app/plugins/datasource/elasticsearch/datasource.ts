@@ -21,7 +21,7 @@ export class ElasticDatasource {
   grafanaDashboardId: number;
   grafanaPanelId: number;
   auditEnabled: boolean;
-  auditVariables: string;
+  auditVariables: object;
   logMessageField?: string;
   logLevelField?: string;
 
@@ -82,7 +82,7 @@ export class ElasticDatasource {
       }
       if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
         options.headers['X-Audit-Enabled'] = 'true';
-        options.headers['X-Audit-Variables'] = this.auditVariables;
+        options.headers['X-Audit-Variables'] = btoa(unescape(encodeURIComponent(angular.toJson(this.auditVariables))));
       }
     }
 
@@ -298,11 +298,14 @@ export class ElasticDatasource {
 
       const auditVariablesData = {};
       _.each(this.templateSrv.variables, variable => {
-        if ((variable.name) && _.has(variable,"current") && variable.current["value"]) {
-          auditVariablesData[variable.name] = variable.current["value"];
+        if (variable.name && _.has(variable, 'current') && variable.current['value']) {
+          if (variable.hide === 0) {
+            console.log('Add audit variable:', variable);
+            auditVariablesData[variable.name] = variable.current['value'];
+          }
         }
       });
-      this.auditVariables = window.btoa(angular.toJson(auditVariablesData));
+      this.auditVariables = auditVariablesData;
 
       const queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
       const queryObj = this.queryBuilder.build(target, adhocFilters, queryString);

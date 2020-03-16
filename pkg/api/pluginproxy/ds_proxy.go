@@ -590,6 +590,9 @@ func (proxy *DataSourceProxy) logRequest() {
 		dashboardAuditVariables = nil
 	}
 
+	proxy.ctx.Req.Header.Del("X-Audit-Variables")
+	proxy.ctx.Req.Header.Del("X-Audit-Enabled")
+
 	if setting.DataProxyLogJSON {
 
 		type ProxyRequestRecord struct {
