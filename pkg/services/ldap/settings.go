@@ -61,6 +61,7 @@ type GroupToOrgRole struct {
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
 	OrgRole models.RoleType `toml:"org_role"`
+	TeamName       string   `toml:"team_name"`
 }
 
 // logger for all LDAP stuff
