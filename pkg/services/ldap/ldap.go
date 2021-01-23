@@ -410,19 +410,64 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
 		OrgRoles: map[int64]models.RoleType{},
+		OrgTeams: map[int64][]string{},
 	}
 
+	// loop through the configured LDAP groups and try to assign org roles and teams to the external user
 	for _, group := range server.Config.Groups {
-		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgId] != "" {
-			continue
-		}
-
 		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			orgRole := extUser.OrgRoles[group.OrgId]
+
+			// assign the most powerful OrgRole found
+			if group.OrgRole.Includes(orgRole) {
+				server.log.Debug("LDAP: user belongs to the role",
+					"login", extUser.Login,
+					"org", group.OrgId,
+					"role", group.OrgRole,
+				)
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
+			// set if the external user is a Grafana Admin
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
+
+			if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin {
+				server.log.Debug("LDAP: user is a GrafanaAdmin",
+					"login", extUser.Login,
+					"org", group.OrgId,
+				)
+			}
+
+			// if the group's teamName is defined, register team membership
+			if group.TeamName != "" {
+				// assign OrgTeams to the user and avoid duplicates
+				teamAlreadyAssigned := false
+				for _, extUserTeam := range extUser.OrgTeams[group.OrgId] {
+					if extUserTeam == group.TeamName {
+						teamAlreadyAssigned = true
+					}
+				}
+				if teamAlreadyAssigned {
+					server.log.Debug("LDAP: user has a duplicate team",
+						"login", extUser.Login,
+						"org", group.OrgId,
+						"team", group.TeamName,
+					)
+				} else {
+					server.log.Debug("LDAP: user belongs to the team",
+						"login", extUser.Login,
+						"org", group.OrgId,
+						"team", group.TeamName,
+					)
+					extUser.OrgTeams[group.OrgId] = append(
+						extUser.OrgTeams[group.OrgId],
+						group.TeamName,
+					)
+				}
+			}
+
 		}
 	}
 
