@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -134,6 +136,19 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+func (ds *DataSource) GetProxyURL(req *http.Request) (*url.URL, error) {
+	proxyEnabled := ds.JsonData.Get("proxyEnabled").MustBool(false)
+	proxyURL := ds.JsonData.Get("proxyURL").MustString("")
+	if proxyEnabled && proxyURL != "" {
+		log.Debugf("DataSource: %s/%s - Got proxy URL: %s", ds.Type, ds.Name, proxyURL)
+		proxyUrl, err := url.Parse(proxyURL)
+		return proxyUrl, err
+	} else {
+		log.Debugf("DataSource: %s/%s - Using default proxy settings", ds.Type, ds.Name)
+		return http.ProxyFromEnvironment(req)
+	}
+}
+
 // Creates a HTTP Transport middleware chain
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
@@ -154,7 +169,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	customHeaders := ds.getCustomHeaders()
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
+		Proxy:           ds.GetProxyURL,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
