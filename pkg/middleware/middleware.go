@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -205,6 +205,20 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
+
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := setting.LoginMaxLifetime + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		WriteCookie(
+			ctx.Resp,
+			setting.TracingCookieName,
+			ctx.SignedInUser.Login,
+			maxAge,
+			newCookieOptions,
+		)
+	}
+
 	return true
 }
 
@@ -238,6 +252,19 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
 	ctx.Resp.Before(rotateEndOfRequestFunc(ctx, authTokenService, token))
+
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := setting.LoginMaxLifetime + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		WriteCookie(
+			ctx.Resp,
+			setting.TracingCookieName,
+			ctx.SignedInUser.Login,
+			maxAge,
+			newCookieOptions,
+		)
+	}
 
 	return true
 }

@@ -152,6 +152,10 @@ var (
 	LoginMaxLifetime time.Duration
 	SigV4AuthEnabled bool
 
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
+
 	AnonymousEnabled bool
 	AnonymousOrgName string
 	AnonymousOrgRole string
@@ -324,6 +328,10 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Tracing
+	TracingEnabled    bool
+	TracingCookieName string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -1045,6 +1053,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
+
+	tracing := iniFile.Section("tracing")
+	TracingEnabled = tracing.Key("enabled").MustBool(false)
+	cfg.TracingEnabled = TracingEnabled
+	TracingCookieName = valueAsString(tracing, "cookie_name", "grafana_user_name")
+	cfg.TracingCookieName = TracingCookieName
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
