@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -137,6 +138,17 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+func (ds *DataSource) GetProxyURL(req *http.Request) (*url.URL, error) {
+	proxyEnabled := ds.JsonData.Get("proxyEnabled").MustBool(false)
+	proxyURL := ds.JsonData.Get("proxyURL").MustString("")
+	if proxyEnabled && proxyURL != "" {
+		proxyUrl, err := url.Parse(proxyURL)
+		return proxyUrl, err
+	} else {
+		return http.ProxyFromEnvironment(req)
+	}
+}
+
 // Creates a HTTP Transport middleware chain
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
@@ -162,7 +174,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 
 	transport := &http.Transport{
 		TLSClientConfig:       tlsConfig,
-		Proxy:                 http.ProxyFromEnvironment,
+		Proxy:                 ds.GetProxyURL,
 		DialContext:           newConntrackDialContext(datasourceLabelName),
 		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
