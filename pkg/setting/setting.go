@@ -75,6 +75,8 @@ var (
 	CertFile, KeyFile              string
 	DataProxyLogging               bool
 	DataProxyTimeout               int
+	DataProxyLogAll                bool
+	DataProxyLogJSON               bool
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
@@ -255,6 +257,12 @@ type Cfg struct {
 	MarketplaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
+
+	// Dataproxy
+	DataProxyLogging bool
+	DataProxyTimeout int
+	DataProxyLogAll  bool
+	DataProxyLogJSON bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -790,6 +798,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
+
+	DataProxyLogAll = dataproxy.Key("all_datasources").MustBool(false)
+	DataProxyLogJSON = dataproxy.Key("json_logging").MustBool(false)
+
+	cfg.DataProxyLogging = DataProxyLogging
+	cfg.DataProxyTimeout = DataProxyTimeout
+	cfg.DataProxyLogAll = DataProxyLogAll
+	cfg.DataProxyLogJSON = DataProxyLogJSON
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err
