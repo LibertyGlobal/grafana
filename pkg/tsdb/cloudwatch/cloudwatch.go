@@ -98,9 +98,15 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	}
 	sessCacheLock.RUnlock()
 
+	httpClient, err := e.DataSource.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+
 	cfgs := []*aws.Config{
 		{
 			CredentialsChainVerboseErrors: aws.Bool(true),
+			HTTPClient: httpClient,
 		},
 	}
 
