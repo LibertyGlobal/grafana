@@ -242,6 +242,20 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
+
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := h.Cfg.LoginMaxLifetime + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		cookies.WriteCookie(
+			ctx.Resp,
+			setting.TracingCookieName,
+			ctx.SignedInUser.Login,
+			maxAge,
+			nil,
+		)
+	}
+
 	return true
 }
 
@@ -277,6 +291,19 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
 	ctx.Resp.Before(h.rotateEndOfRequestFunc(ctx, h.AuthTokenService, token))
+
+	if setting.TracingEnabled {
+		var maxAge int
+		maxAgeHours := h.Cfg.LoginMaxLifetime + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+		cookies.WriteCookie(
+			ctx.Resp,
+			setting.TracingCookieName,
+			ctx.SignedInUser.Login,
+			maxAge,
+			nil,
+		)
+	}
 
 	return true
 }
