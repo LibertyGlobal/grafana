@@ -566,6 +566,21 @@ func (proxy *DataSourceProxy) logRequest() {
 		return
 	}
 
+	datasourceAuditEnabled := proxy.ds.JsonData.Get("auditEnabled").MustBool(false)
+	dashboardAuditEnabled, err := strconv.ParseBool(proxy.ctx.Req.Header.Get("X-Audit-Enabled"))
+	if err != nil {
+		dashboardAuditEnabled = false
+	}
+
+	// Continue if audit have been enabled by:
+	// * Globally set enabled for all dashboards and datasources
+	// * Set for this datasource by auditEnabled property
+	// * Set for this dashboard by X-Audit-Enabled header
+	if !(setting.DataProxyLogAll || datasourceAuditEnabled || dashboardAuditEnabled) {
+		return
+	}
+
+	// Obtain the http request body and restore the original request body object
 	var body string
 	if proxy.ctx.Req.Request.Body != nil {
 		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Request.Body)
@@ -575,14 +590,96 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
-	logger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserId,
-		"orgid", proxy.ctx.OrgId,
-		"username", proxy.ctx.Login,
-		"datasource", proxy.ds.Type,
-		"uri", proxy.ctx.Req.RequestURI,
-		"method", proxy.ctx.Req.Request.Method,
-		"body", body)
+	// Get the dashboard and panel ids form the HTTP headers
+	dashboardId := proxy.ctx.Req.Header.Get("X-Dashboard-Id")
+	panelId := proxy.ctx.Req.Header.Get("X-Panel-Id")
+
+	// Decode the audit variables if they have been sent
+	var dashboardAuditVariablesHeader string
+	var dashboardAuditVariables []byte
+
+	dashboardAuditVariablesHeader = proxy.ctx.Req.Header.Get("X-Audit-Variables")
+	if dashboardAuditVariablesHeader != "" {
+		dashboardAuditVariables, err = base64.StdEncoding.DecodeString(dashboardAuditVariablesHeader)
+		if err != nil {
+			logger.Error("Could not decode the audit variables! Got header: " + dashboardAuditVariablesHeader)
+			dashboardAuditVariables = nil
+		}
+	} else {
+		dashboardAuditVariables = nil
+	}
+
+	// Clean up the audit headers to prevent passing them to the datasource backend
+	proxy.ctx.Req.Header.Del("X-Audit-Variables")
+	proxy.ctx.Req.Header.Del("X-Audit-Enabled")
+
+	if setting.DataProxyLogJSON {
+
+		type ProxyRequestRecord struct {
+			OrgID          int64       `json:"org_id"`
+			UserId         int64       `json:"user_id"`
+			Username       string      `json:"username"`
+			DatasourceType string      `json:"datasource_type"`
+			DatasourceName string      `json:"datasource_name"`
+			Method         string      `json:"method"`
+			Uri            string      `json:"uri"`
+			Referer        string      `json:"referer"`
+			DashboardId    string      `json:"dashboard_id"`
+			PanelId        string      `json:"panel_id"`
+			Variables      interface{} `json:"variables"`
+			Body           string      `json:"body"`
+		}
+
+		requestRecord := ProxyRequestRecord{
+			OrgID:          proxy.ctx.OrgId,
+			UserId:         proxy.ctx.OrgId,
+			Username:       proxy.ctx.Login,
+			DatasourceType: proxy.ds.Type,
+			DatasourceName: proxy.ds.Name,
+			Method:         proxy.ctx.Req.Request.Method,
+			Uri:            proxy.ctx.Req.RequestURI,
+			Referer:        proxy.ctx.Req.Request.Referer(),
+			DashboardId:    dashboardId,
+			PanelId:        panelId,
+			Body:           body,
+		}
+
+		if dashboardAuditVariables != nil {
+			err = json.Unmarshal(dashboardAuditVariables, &requestRecord.Variables)
+			if err != nil {
+				logger.Error("Could not parse the audit variables! Got header: " + string(dashboardAuditVariables))
+				requestRecord.Variables = nil
+			}
+		} else {
+			requestRecord.Variables = nil
+		}
+
+		requestRecordString, _ := json.Marshal(requestRecord)
+
+		logger.Info("Proxying incoming request",
+			"data",
+			base64.StdEncoding.EncodeToString(requestRecordString),
+		)
+
+	} else {
+
+		logger.Info("Proxying incoming request",
+			"userid", proxy.ctx.UserId,
+			"orgid", proxy.ctx.OrgId,
+			"username", proxy.ctx.Login,
+			"datasource", proxy.ds.Type,
+			"name", proxy.ds.Name,
+			"uri", proxy.ctx.Req.RequestURI,
+			"method", proxy.ctx.Req.Request.Method,
+			"referer", proxy.ctx.Req.Request.Referer(),
+			"dashboard", dashboardId,
+			"panel", panelId,
+			"variables", string(dashboardAuditVariables),
+			"body", body,
+		)
+
+	}
+
 }
 
 func checkWhiteList(c *models.ReqContext, host string) bool {
