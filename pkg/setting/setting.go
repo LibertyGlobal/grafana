@@ -131,6 +131,9 @@ var (
 	// HTTP auth
 	SigV4AuthEnabled bool
 
+	TracingEnabled    bool
+	TracingCookieName string
+
 	AnonymousEnabled bool
 
 	// Auth proxy settings
@@ -334,6 +337,9 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	TracingEnabled    bool
+	TracingCookieName string
 
 	// Sentry config
 	Sentry Sentry
@@ -1152,6 +1158,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
+
+	tracing := iniFile.Section("tracing")
+	TracingEnabled = tracing.Key("enabled").MustBool(false)
+	cfg.TracingEnabled = TracingEnabled
+	TracingCookieName = valueAsString(tracing, "cookie_name", "grafana_user_name")
+	cfg.TracingCookieName = TracingCookieName
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
