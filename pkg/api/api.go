@@ -15,6 +15,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqAccessViewDatasources := middleware.AdminOrFeatureEnabled(hs.Cfg.CanViewDatasources)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn()
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
@@ -37,9 +38,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
-	r.Get("/datasources/", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/", reqAccessViewDatasources, hs.Index)
 	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
-	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/edit/*", reqAccessViewDatasources, hs.Index)
 	r.Get("/org/users", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", reqOrgAdmin, hs.Index)
@@ -239,14 +240,17 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", Wrap(GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), Wrap(UpdateDataSource))
 			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceById))
 			datasourceRoute.Delete("/name/:name", Wrap(DeleteDataSourceByName))
+		}, reqOrgAdmin)
+
+		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
+			datasourceRoute.Get("/", Wrap(GetDataSources))
 			datasourceRoute.Get("/:id", Wrap(GetDataSourceById))
 			datasourceRoute.Get("/name/:name", Wrap(GetDataSourceByName))
-		}, reqOrgAdmin)
+		}, reqAccessViewDatasources)
 
 		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 

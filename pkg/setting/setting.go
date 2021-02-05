@@ -320,6 +320,7 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+	CanViewDatasources bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -1151,6 +1152,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+	cfg.CanViewDatasources = users.Key("can_view_datasources").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
 	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
