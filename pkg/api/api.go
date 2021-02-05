@@ -27,6 +27,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
+	reqAccessViewDatasources := middleware.AdminOrFeatureEnabled(hs.Cfg.CanViewDatasources)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -50,9 +51,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
-	r.Get("/datasources/", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/", reqAccessViewDatasources, hs.Index)
 	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
-	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/edit/*", reqAccessViewDatasources, hs.Index)
 	r.Get("/org/users", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", reqOrgAdmin, hs.Index)
@@ -253,16 +254,19 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), routing.Wrap(UpdateDataSource))
 			datasourceRoute.Delete("/:id", routing.Wrap(DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", routing.Wrap(DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", routing.Wrap(DeleteDataSourceByName))
+		}, reqOrgAdmin)
+
+		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
+			datasourceRoute.Get("/", routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Get("/:id", routing.Wrap(GetDataSourceById))
 			datasourceRoute.Get("/uid/:uid", routing.Wrap(GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", routing.Wrap(GetDataSourceByName))
-		}, reqOrgAdmin)
+		}, reqAccessViewDatasources)
 
 		apiRoute.Get("/datasources/id/:name", routing.Wrap(GetDataSourceIdByName), reqSignedIn)
 
