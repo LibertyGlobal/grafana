@@ -5,6 +5,7 @@ import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
+import { AllowedTeams } from './AllowedTeams';
 import { config } from 'app/core/config';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
@@ -45,6 +46,8 @@ export const ConfigEditor = (props: Props) => {
       />
 
       <ElasticDetails value={options} onChange={onOptionsChange} />
+
+      <AllowedTeams value={options} onChange={onOptionsChange} />
 
       <LogsConfig
         value={options.jsonData}
