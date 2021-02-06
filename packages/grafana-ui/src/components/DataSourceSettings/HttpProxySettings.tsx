@@ -39,6 +39,14 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           onChange={(event) => onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })}
           tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
         />
+
+        <Switch
+          label="Audit enabled"
+          labelClass="width-13"
+          checked={dataSourceConfig.jsonData.auditEnabled || false}
+          onChange={event => onChange({ ...dataSourceConfig.jsonData, auditEnabled: event!.currentTarget.checked })}
+          tooltip="Log the bodies of all queries to this datasource"
+        />
       </div>
     </>
   );

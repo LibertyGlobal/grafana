@@ -13,6 +13,8 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import angular from 'angular';
+import _ from 'lodash';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -419,6 +421,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
+
+    const auditVariablesData: { [index: string]: any } = {};
+    _.each(this.templateSrv.getVariables(), (variable) => {
+      if (_.has(variable, ['current', 'value']) && variable.hide === 0) {
+        auditVariablesData[variable.name] = _.get(variable, ['current', 'value']);
+      }
+    });
+
+    if (typeof options.auditEnabled !== 'undefined' && options.auditEnabled) {
+      query.headers['X-Audit-Enabled'] = 'true';
+      query.headers['X-Audit-Variables'] = btoa(unescape(encodeURIComponent(angular.toJson(auditVariablesData))));
+    }
 
     return query;
   }
