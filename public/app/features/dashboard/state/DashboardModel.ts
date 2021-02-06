@@ -74,6 +74,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  auditEnabled: any;
 
   // ------------------
   // not persisted
@@ -124,6 +125,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.auditEnabled = data.auditEnabled || false;
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();

@@ -463,6 +463,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardId?: number;
+  auditEnabled?: boolean;
 
   // Request Timing
   startTime: number;

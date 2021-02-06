@@ -204,6 +204,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
       transformations: panel.transformations,
+      auditEnabled: this.dashboard.auditEnabled,
     });
   }
 
