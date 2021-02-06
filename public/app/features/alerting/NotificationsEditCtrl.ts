@@ -28,6 +28,8 @@ export class AlertNotificationEditCtrl {
     },
     secureSettings: {},
     isDefault: false,
+    proxyEnabled: false,
+    proxyURL: '',
   };
   getFrequencySuggestion: any;
   rendererAvailable: boolean;

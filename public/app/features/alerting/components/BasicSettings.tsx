@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, Select } from '@grafana/ui';
+import { Field, Input, InputControl, Select, CollapsableSection, Checkbox } from '@grafana/ui';
 import { NotificationChannelOptions } from './NotificationChannelOptions';
 import { NotificationSettingsProps } from './NotificationChannelForm';
 import { NotificationChannelSecureFields, NotificationChannelType } from '../../../types';
@@ -39,6 +39,19 @@ export const BasicSettings: FC<Props> = ({
         errors={errors}
         control={control}
       />
+      <CollapsableSection label="Proxy settings" isOpen={false}>
+        <Field>
+          <Checkbox
+            name="settings.proxyEnabled"
+            ref={register}
+            label="Proxy Enabled"
+            description="Send HTTP requests through the proxy server"
+          />
+        </Field>
+        <Field label="Proxy URL">
+          <Input name="settings.proxyURL" ref={register} label="Proxy URL" placeholder="url" />
+        </Field>
+      </CollapsableSection>
     </>
   );
 };

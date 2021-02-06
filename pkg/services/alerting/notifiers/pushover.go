@@ -208,6 +208,8 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	alertingSound := model.Settings.Get("sound").MustString()
 	okSound := model.Settings.Get("okSound").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
 
 	if userKey == "" {
 		return nil, alerting.ValidationError{Reason: "User key not given"}
@@ -227,6 +229,8 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		AlertingSound:    alertingSound,
 		OKSound:          okSound,
 		Upload:           uploadImage,
+		ProxyEnabled:     proxyEnabled,
+		ProxyURL:         proxyURL,
 		log:              log.New("alerting.notifier.pushover"),
 	}, nil
 }
@@ -245,6 +249,8 @@ type PushoverNotifier struct {
 	AlertingSound    string
 	OKSound          string
 	Upload           bool
+	ProxyEnabled     bool
+	ProxyURL         string
 	log              log.Logger
 }
 
@@ -282,6 +288,10 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
+	}
+
+	if pn.ProxyEnabled {
+		cmd.ProxyUrl = pn.ProxyURL
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

@@ -59,6 +59,8 @@ const basicFormData: NotificationChannelDTO = {
   },
   secureFields: {},
   secureSettings: {},
+  proxyEnabled: false,
+  proxyURL: '',
 };
 
 const selectFormData: NotificationChannelDTO = {
@@ -149,6 +151,8 @@ const selectFormData: NotificationChannelDTO = {
   },
   secureFields: { password: true },
   secureSettings: {},
+  proxyEnabled: false,
+  proxyURL: '',
 };
 
 describe('Transform submit data', () => {
