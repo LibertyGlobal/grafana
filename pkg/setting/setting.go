@@ -94,6 +94,7 @@ var (
 	// Security settings.
 	SecretKey              string
 	DisableGravatar        bool
+	GravatarProxyUrl       string
 	EmailCodeValidMinutes  int
 	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
@@ -1071,6 +1072,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	SecretKey = valueAsString(security, "secret_key", "")
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	GravatarProxyUrl = valueAsString(security, "gravatar_proxy_url", "")
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
