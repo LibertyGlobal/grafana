@@ -4,6 +4,7 @@ import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
+import { ProxyURLSettings } from './ProxyURLSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { Select } from '../Forms/Legacy/Select/Select';
 import { Input } from '../Forms/Legacy/Input/Input';
@@ -217,6 +218,15 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             <h6>Basic Auth Details</h6>
             <div className="gf-form-group">
               <BasicAuthSettings {...props} />
+            </div>
+          </>
+        )}
+
+        {dataSourceConfig.jsonData.proxyEnabled && (
+          <>
+            <h6>HTTP Proxy Details</h6>
+            <div className="gf-form-group">
+              <ProxyURLSettings {...props} />
             </div>
           </>
         )}
