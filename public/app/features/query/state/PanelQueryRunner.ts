@@ -45,6 +45,7 @@ export interface QueryRunnerOptions<
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
   transformations?: DataTransformerConfig[];
+  auditEnabled?: boolean;
 }
 
 let counter = 100;
@@ -133,6 +134,7 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
+      auditEnabled,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -183,6 +185,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
+      request.auditEnabled = auditEnabled;
 
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {

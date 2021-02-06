@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import {
   DataFrame,
   DataQueryRequest,
@@ -10,6 +9,8 @@ import {
   toDataFrame,
   TimeRange,
 } from '@grafana/data';
+import angular from 'angular';
+import _ from 'lodash';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
@@ -91,6 +92,18 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     };
 
     this.addTracingHeaders(httpOptions, options);
+
+    const auditVariablesData: { [index: string]: any } = {};
+    _.each(this.templateSrv.getVariables(), (variable) => {
+      if (_.has(variable, ['current', 'value']) && variable.hide === 0) {
+        auditVariablesData[variable.name] = _.get(variable, ['current', 'value']);
+      }
+    });
+
+    if (typeof options.auditEnabled !== 'undefined' && options.auditEnabled) {
+      httpOptions.headers['X-Audit-Enabled'] = 'true';
+      httpOptions.headers['X-Audit-Variables'] = btoa(unescape(encodeURIComponent(angular.toJson(auditVariablesData))));
+    }
 
     if (options.panelId) {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;

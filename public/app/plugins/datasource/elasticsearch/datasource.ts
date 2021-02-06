@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import {
   DataFrame,
   DataLink,
@@ -18,6 +17,8 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
+import angular from 'angular';
+import _ from 'lodash';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
@@ -68,6 +69,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
+  dashboardId?: number;
+  panelId?: number;
+  auditEnabled?: boolean;
+  auditVariables?: object;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -111,13 +116,27 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       data: data,
     };
 
+    options.headers = {};
+
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      options.headers['Authorization'] = this.basicAuth;
+    }
+
+    const proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      if (typeof this.dashboardId !== 'undefined') {
+        options.headers['X-Dashboard-Id'] = this.dashboardId;
+      }
+      if (typeof this.panelId !== 'undefined') {
+        options.headers['X-Panel-Id'] = this.panelId;
+      }
+      if (typeof this.auditEnabled !== 'undefined' && this.auditEnabled) {
+        options.headers['X-Audit-Enabled'] = 'true';
+        options.headers['X-Audit-Variables'] = btoa(unescape(encodeURIComponent(angular.toJson(this.auditVariables))));
+      }
     }
 
     return getBackendSrv()
@@ -533,6 +552,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
+    if (typeof options.dashboardId !== 'undefined') {
+      this.dashboardId = options.dashboardId;
+    }
+    if (typeof options.panelId !== 'undefined') {
+      this.panelId = options.panelId;
+    }
+    if (typeof options.auditEnabled !== 'undefined' && options.auditEnabled) {
+      this.auditEnabled = options.auditEnabled;
+    }
+
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
@@ -540,6 +569,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       if (target.hide) {
         continue;
       }
+
+      const auditVariablesData: { [index: string]: any } = {};
+      _.each(this.templateSrv.getVariables(), (variable) => {
+        if (_.has(variable, ['current', 'value']) && variable.hide === 0) {
+          auditVariablesData[variable.name] = _.get(variable, ['current', 'value']);
+        }
+      });
+
+      this.auditVariables = auditVariablesData;
 
       let queryObj;
       if (hasMetricOfType(target, 'logs')) {
