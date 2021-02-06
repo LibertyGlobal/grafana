@@ -200,22 +200,40 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client = &http.Client{
-	Timeout:   time.Second * 2,
-	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+func getProxyFunction() func(*http.Request) (*url.URL, error) {
+	if setting.GravatarProxyUrl != "" {
+		proxyUrl, err := url.Parse(setting.GravatarProxyUrl)
+		if err != nil {
+			return http.ProxyFromEnvironment
+		} else {
+			return http.ProxyURL(proxyUrl)
+		}
+	} else {
+		return http.ProxyFromEnvironment
+	}
+}
+
+func getHttpClient() *http.Client {
+	return &http.Client{
+		Timeout:   time.Second * 5,
+		Transport: &http.Transport{Proxy: getProxyFunction()},
+	}
 }
 
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()
 
-	log.Debugf("avatar.fetch(fetch new avatar): %s", this.Url)
+	log.Debugf("avatar.fetch(fetch new avatar): %s proxy: %s", this.Url, setting.GravatarProxyUrl)
 	req, _ := http.NewRequest("GET", this.Url, nil)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jpeg,image/png,*/*;q=0.8")
 	req.Header.Set("Accept-Encoding", "deflate,sdch")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.8")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36")
-	resp, err := client.Do(req)
+
+	httpClient := getHttpClient()
+	resp, err := httpClient.Do(req)
+
 	if err != nil {
 		this.Avatar.notFound = true
 		return fmt.Errorf("gravatar unreachable, %v", err)
