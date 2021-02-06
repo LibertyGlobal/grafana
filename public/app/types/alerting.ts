@@ -90,6 +90,8 @@ export interface NotificationChannelDTO {
   secureSettings: NotificationChannelSecureSettings;
   secureFields: NotificationChannelSecureFields;
   isDefault: boolean;
+  proxyEnabled: boolean;
+  proxyURL: string;
 }
 
 export type NotificationChannelSecureSettings = Record<string, string | number>;

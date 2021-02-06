@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -24,25 +25,44 @@ type Webhook struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	ProxyUrl    string
 }
 
-var netTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		Renegotiation: tls.RenegotiateFreelyAsClient,
-	},
-	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 5 * time.Second,
+func getProxyFunction(webhook *Webhook) func(*http.Request) (*url.URL, error) {
+	if webhook.ProxyUrl != "" {
+		proxyUrl, err := url.Parse(webhook.ProxyUrl)
+		if err != nil {
+			return http.ProxyFromEnvironment
+		} else {
+			return http.ProxyURL(proxyUrl)
+		}
+	} else {
+		return http.ProxyFromEnvironment
+	}
 }
-var netClient = &http.Client{
-	Timeout:   time.Second * 30,
-	Transport: netTransport,
+
+func getHttpClient(webhook *Webhook) *http.Client {
+	var netTransport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			Renegotiation: tls.RenegotiateFreelyAsClient,
+		},
+		Proxy: getProxyFunction(webhook),
+		Dial: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+
+	var netClient = &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: netTransport,
+	}
+
+	return netClient
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
-	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
+	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod, "ProxyUrl", webhook.ProxyUrl)
 
 	if webhook.HttpMethod == "" {
 		webhook.HttpMethod = http.MethodPost
@@ -71,6 +91,8 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	for k, v := range webhook.HttpHeader {
 		request.Header.Set(k, v)
 	}
+
+	netClient := getHttpClient(webhook)
 
 	resp, err := ctxhttp.Do(ctx, netClient, request)
 	if err != nil {

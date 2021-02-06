@@ -109,6 +109,7 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		ProxyUrl:    cmd.ProxyUrl,
 	})
 }
 

@@ -54,10 +54,12 @@ func init() {
 // alert notifications to Telegram.
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken    string
-	ChatID      string
-	UploadImage bool
-	log         log.Logger
+	BotToken     string
+	ChatID       string
+	UploadImage  bool
+	ProxyEnabled bool
+	ProxyURL     string
+	log          log.Logger
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
@@ -69,6 +71,8 @@ func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -83,6 +87,8 @@ func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		BotToken:     botToken,
 		ChatID:       chatID,
 		UploadImage:  uploadImage,
+		ProxyEnabled: proxyEnabled,
+		ProxyURL:     proxyURL,
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
@@ -267,6 +273,10 @@ func (tn *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if tn.ProxyEnabled {
+		cmd.ProxyUrl = tn.ProxyURL
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
