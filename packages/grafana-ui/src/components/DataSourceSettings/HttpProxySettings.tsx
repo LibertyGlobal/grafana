@@ -30,6 +30,14 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           checked={dataSourceConfig.jsonData.tlsSkipVerify || false}
           onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })}
         />
+
+        <Switch
+          label="Use HTTP Proxy"
+          labelClass="width-13"
+          checked={dataSourceConfig.jsonData.proxyEnabled || false}
+          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, proxyEnabled: event!.currentTarget.checked })}
+          tooltip="Connect to the target of this datasource through the specified HTTP Proxy URL"
+        />
       </div>
       <div className="gf-form-inline">
         <Switch
@@ -44,7 +52,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           label="Audit enabled"
           labelClass="width-13"
           checked={dataSourceConfig.jsonData.auditEnabled || false}
-          onChange={event => onChange({ ...dataSourceConfig.jsonData, auditEnabled: event!.currentTarget.checked })}
+          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, auditEnabled: event!.currentTarget.checked })}
           tooltip="Log the bodies of all queries to this datasource"
         />
       </div>
