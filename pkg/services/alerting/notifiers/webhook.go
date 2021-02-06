@@ -64,6 +64,8 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	}
 
 	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),
@@ -71,6 +73,8 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		User:         model.Settings.Get("username").MustString(),
 		Password:     password,
 		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
+		ProxyEnabled: proxyEnabled,
+		ProxyURL:     proxyURL,
 		log:          log.New("alerting.notifier.webhook"),
 	}, nil
 }
@@ -79,11 +83,13 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 // alert notifications as webhooks.
 type WebhookNotifier struct {
 	NotifierBase
-	URL        string
-	User       string
-	Password   string
-	HTTPMethod string
-	log        log.Logger
+	URL          string
+	User         string
+	Password     string
+	HTTPMethod   string
+	ProxyEnabled bool
+	ProxyURL     string
+	log          log.Logger
 }
 
 // Notify send alert notifications as
@@ -130,6 +136,10 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Password:   wn.Password,
 		Body:       string(body),
 		HttpMethod: wn.HTTPMethod,
+	}
+
+	if wn.ProxyEnabled {
+		cmd.ProxyUrl = wn.ProxyURL
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

@@ -19,6 +19,8 @@ export const defaultValues: NotificationChannelDTO = {
   secureSettings: {},
   secureFields: {},
   isDefault: false,
+  proxyEnabled: false,
+  proxyURL: '',
 };
 
 export const mapChannelsToSelectableValue = memoizeOne(

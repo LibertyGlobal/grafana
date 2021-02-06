@@ -67,6 +67,8 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	if apiURL == "" {
 		apiURL = opsgenieAlertURL
 	}
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
 
 	return &OpsGenieNotifier{
 		NotifierBase:     NewNotifierBase(model),
@@ -74,6 +76,8 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		APIUrl:           apiURL,
 		AutoClose:        autoClose,
 		OverridePriority: overridePriority,
+		ProxyEnabled:     proxyEnabled,
+		ProxyURL:         proxyURL,
 		log:              log.New("alerting.notifier.opsgenie"),
 	}, nil
 }
@@ -86,6 +90,8 @@ type OpsGenieNotifier struct {
 	APIUrl           string
 	AutoClose        bool
 	OverridePriority bool
+	ProxyEnabled     bool
+	ProxyURL         string
 	log              log.Logger
 }
 
@@ -183,6 +189,10 @@ func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error 
 			"Content-Type":  "application/json",
 			"Authorization": fmt.Sprintf("GenieKey %s", on.APIKey),
 		},
+	}
+
+	if on.ProxyEnabled {
+		cmd.ProxyUrl = on.ProxyURL
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

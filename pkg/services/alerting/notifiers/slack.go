@@ -134,6 +134,9 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
+
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
 		return nil, alerting.ValidationError{
 			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
@@ -166,6 +169,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		MentionChannel: mentionChannel,
 		Token:          token,
 		Upload:         uploadImage,
+		ProxyEnabled:   proxyEnabled,
+		ProxyURL:       proxyURL,
 		log:            log.New("alerting.notifier.slack"),
 	}, nil
 }
@@ -184,6 +189,8 @@ type SlackNotifier struct {
 	MentionChannel string
 	Token          string
 	Upload         bool
+	ProxyEnabled   bool
+	ProxyURL       string
 	log            log.Logger
 }
 
@@ -310,6 +317,11 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body:       string(data),
 		HttpMethod: http.MethodPost,
 	}
+
+	if sn.ProxyEnabled {
+		cmd.ProxyUrl = sn.ProxyURL
+	}
+
 	if sn.Token != "" {
 		sn.log.Debug("Adding authorization header to HTTP request")
 		cmd.HttpHeader = map[string]string{

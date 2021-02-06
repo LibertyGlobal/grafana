@@ -36,9 +36,14 @@ func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	proxyEnabled := model.Settings.Get("proxyEnabled").MustBool(false)
+	proxyURL := model.Settings.Get("proxyURL").MustString()
+
 	return &TeamsNotifier{
 		NotifierBase: NewNotifierBase(model),
 		URL:          url,
+		ProxyEnabled: proxyEnabled,
+		ProxyURL:     proxyURL,
 		log:          log.New("alerting.notifier.teams"),
 	}, nil
 }
@@ -47,8 +52,10 @@ func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	NotifierBase
-	URL string
-	log log.Logger
+	URL          string
+	ProxyEnabled bool
+	ProxyURL     string
+	log          log.Logger
 }
 
 // Notify send an alert notification to Microsoft teams.
@@ -134,6 +141,10 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	data, _ := json.Marshal(&body)
 	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(data)}
+
+	if tn.ProxyEnabled {
+		cmd.ProxyUrl = tn.ProxyURL
+	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		tn.log.Error("Failed to send teams notification", "error", err, "webhook", tn.Name)
