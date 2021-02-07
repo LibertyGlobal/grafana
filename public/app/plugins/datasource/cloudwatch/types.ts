@@ -62,6 +62,8 @@ export interface CloudWatchJsonData extends DataSourceJsonData {
   externalId?: string;
   database?: string;
   customMetricsNamespaces?: string;
+  proxyEnabled?: boolean;
+  proxyURL?: string;
 }
 
 export interface CloudWatchSecureJsonData {

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+const { Select, Input, Switch } = LegacyForms;
 import {
   AppEvents,
   DataSourcePluginOptionsEditorProps,
@@ -8,6 +8,7 @@ import {
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
+  onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -311,6 +312,30 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 placeholder="Namespace1,Namespace2"
                 value={options.jsonData.customMetricsNamespaces || ''}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'customMetricsNamespaces')}
+              />
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-14" tooltip="Use this HTTP Proxy URL for the datasource queries">
+                Proxy URL
+              </InlineFormLabel>
+              <Input
+                className="width-30"
+                placeholder="url"
+                value={options.jsonData.proxyURL || ''}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'proxyURL')}
+              />
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <Switch
+                checked={options.jsonData.proxyEnabled || false}
+                label="Proxy Enabled"
+                labelClass="width-14"
+                onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'proxyEnabled')}
+                tooltip="Enable the HTTP PRoxy for this datasource"
               />
             </div>
           </div>
