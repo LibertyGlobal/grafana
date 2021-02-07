@@ -223,6 +223,11 @@ $external-services: (
     borderColor: #393939,
     icon: '',
   ),
+  rizzo: (
+    bgColor: #322332,
+    borderColor: #393939,
+    icon: '',
+  ),
   okta: (
     bgColor: #2f2f2f,
     borderColor: #393939,

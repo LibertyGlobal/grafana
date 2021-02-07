@@ -36,6 +36,12 @@ const loginServices: () => LoginServices = () => {
       hrefName: 'grafana_com',
       icon: 'grafana_com',
     },
+    rizzo: {
+      enabled: oauthEnabled && config.oauth.rizzo,
+      name: 'Rizzo',
+      hrefName: 'rizzo',
+      icon: 'rizzo',
+    },
     okta: {
       enabled: oauthEnabled && config.oauth.okta,
       name: 'Okta',

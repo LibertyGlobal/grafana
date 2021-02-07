@@ -213,6 +213,7 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]models.RoleType{},
+		OrgTeams:   map[int64][]string{},
 		Groups:     userInfo.Groups,
 	}
 
@@ -232,6 +233,20 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 			}
 			extUser.OrgRoles[orgID] = rt
 		}
+	}
+
+	if len(userInfo.Groups) > 0 {
+		var orgID int64
+		if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+			orgID = int64(setting.AutoAssignOrgId)
+			logger.Debug("The user has a group assignment and organization membership is auto-assigned",
+				"role", userInfo.Role, "orgId", orgID)
+		} else {
+			orgID = int64(1)
+			logger.Debug("The user has a group assignment and organization membership is not auto-assigned",
+				"role", userInfo.Role, "orgId", orgID)
+		}
+		extUser.OrgTeams[orgID] = userInfo.Groups
 	}
 
 	return extUser
