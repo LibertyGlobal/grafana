@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"context"
@@ -65,7 +66,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta", "rizzo"}
 )
 
 func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) *SocialBase {
@@ -104,6 +105,7 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
+			ProxyUrl:           sec.Key("proxy_url").String(),
 		}
 
 		if !info.Enabled {
@@ -209,6 +211,26 @@ func NewOAuthService() {
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
+
+		// Rizzo - Uses the Rizzo UK OAuth scheme
+		if name == "rizzo" {
+			SocialMap["rizzo"] = &SocialRizzoOAuth{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				roleSupport:    sec.Key("role_support").MustBool(false),
+				roleAttribute:  sec.Key("role_attribute").MustString("ODH:modem"),
+				deniedRole:     sec.Key("denied_role").MustString("denied"),
+				viewerRole:     sec.Key("viewer_role").MustString("readonly"),
+				editorRole:     sec.Key("editor_role").MustString("readwrite"),
+				adminRole:      sec.Key("admin_role").MustString("admin"),
+				defaultRole:    sec.Key("default_role").MustString("denied"),
+			}
+		}
 	}
 }
 
@@ -253,6 +275,18 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 			InsecureSkipVerify: info.TlsSkipVerify,
 		},
 	}
+
+	if info.ProxyUrl != "" {
+		proxyUrl, err := url.Parse(info.ProxyUrl)
+		if err == nil {
+			logger.Debug("Using the proxy server for the OAuth connection",
+				"oauth", name,
+				"proxyUrl", info.ProxyUrl,
+			)
+			tr.Proxy = http.ProxyURL(proxyUrl)
+		}
+	}
+
 	oauthClient := &http.Client{
 		Transport: tr,
 	}

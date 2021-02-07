@@ -186,6 +186,7 @@ func TestMetrics(t *testing.T) {
 			"google":        true,
 			"generic_oauth": true,
 			"grafana_com":   true,
+			"rizzo":		 true,
 		}
 
 		err := uss.sendUsageStats(context.Background())
@@ -290,6 +291,7 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_gitlab.count").MustInt())
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_google.count").MustInt())
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_azuread.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_rizzo.count").MustInt())
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt())
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt())
 

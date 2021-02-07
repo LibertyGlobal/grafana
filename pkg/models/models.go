@@ -11,4 +11,5 @@ const (
 	GITLAB
 	AZUREAD
 	OKTA
+	RIZZO
 )
