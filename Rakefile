@@ -6,7 +6,7 @@ def run(*args)
 end
 
 task :variables do
-  ENV['GRAFANA_VERSION'] = '7.3.7' unless ENV['GRAFANA_VERSION']
+  ENV['GRAFANA_VERSION'] = '7.4.3' unless ENV['GRAFANA_VERSION']
   ENV['GO_PIPELINE_LABEL'] = "dev" unless ENV['GO_PIPELINE_LABEL']
 
   ENV['PROXY_URL'] = "http://172.31.101.80:8888" unless ENV['PROXY_URL']
