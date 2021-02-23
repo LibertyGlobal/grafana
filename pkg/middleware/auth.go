@@ -146,6 +146,18 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
+func GrafanaAdminIfFeatureEnabled(enabled bool) macaron.Handler {
+	return func(c *models.ReqContext) {
+		if !enabled {
+			return
+		}
+
+		if !c.IsGrafanaAdmin {
+			accessForbidden(c)
+		}
+	}
+}
+
 // SnapshotPublicModeOrSignedIn creates a middleware that allows access
 // if snapshot public mode is enabled or if user is signed in.
 func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {

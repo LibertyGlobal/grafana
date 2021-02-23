@@ -26,6 +26,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqCanEditFolders := middleware.GrafanaAdminIfFeatureEnabled(hs.Cfg.GrafanaAdminEditFolders)
+	reqCanEditOrgPreferences := middleware.GrafanaAdminIfFeatureEnabled(hs.Cfg.GrafanaAdminEditOrgPreferences)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	reqAccessViewDatasources := middleware.AdminOrFeatureEnabled(hs.Cfg.CanViewDatasources)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
@@ -193,8 +195,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
-			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
+			orgRoute.Put("/", reqCanEditOrgPreferences, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
+			orgRoute.Put("/address", reqCanEditOrgPreferences, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
 			orgRoute.Get("/users", routing.Wrap(hs.GetOrgUsersForCurrentOrg))
 			orgRoute.Post("/users", quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUserForCurrentOrg))
@@ -207,7 +209,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// prefs
 			orgRoute.Get("/preferences", routing.Wrap(GetOrgPreferences))
-			orgRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateOrgPreferences))
+			orgRoute.Put("/preferences", reqCanEditOrgPreferences, bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateOrgPreferences))
 		}, reqOrgAdmin)
 
 		// current org without requirement of user to be org admin
@@ -295,12 +297,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
 			folderRoute.Get("/", routing.Wrap(GetFolders))
 			folderRoute.Get("/id/:id", routing.Wrap(GetFolderByID))
-			folderRoute.Post("/", bind(models.CreateFolderCommand{}), routing.Wrap(hs.CreateFolder))
+			folderRoute.Post("/", reqCanEditFolders, bind(models.CreateFolderCommand{}), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", routing.Wrap(GetFolderByUID))
-				folderUidRoute.Put("/", bind(models.UpdateFolderCommand{}), routing.Wrap(UpdateFolder))
-				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
+				folderUidRoute.Put("/", reqCanEditFolders, bind(models.UpdateFolderCommand{}), routing.Wrap(UpdateFolder))
+				folderUidRoute.Delete("/", reqCanEditFolders, routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 					folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
