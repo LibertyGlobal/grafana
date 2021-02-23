@@ -308,8 +308,10 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
 
-	EditorsCanAdmin bool
-	CanViewDatasources bool
+	EditorsCanAdmin                bool
+	CanViewDatasources             bool
+	GrafanaAdminEditFolders        bool
+	GrafanaAdminEditOrgPreferences bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -1212,6 +1214,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 	cfg.CanViewDatasources = users.Key("can_view_datasources").MustBool(false)
+	cfg.GrafanaAdminEditFolders = users.Key("grafana_admin_edit_folders").MustBool(false)
+	cfg.GrafanaAdminEditOrgPreferences = users.Key("grafana_admin_edit_org_preferences").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
 	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
