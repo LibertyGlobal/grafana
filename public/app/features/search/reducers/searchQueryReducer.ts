@@ -3,6 +3,7 @@ import {
   ADD_TAG,
   CLEAR_FILTERS,
   LAYOUT_CHANGE,
+  DATA_CHANGE,
   QUERY_CHANGE,
   REMOVE_STARRED,
   REMOVE_TAG,
@@ -21,6 +22,7 @@ export const defaultQuery: DashboardQuery = {
   sort: null,
   layout: SearchLayout.Folders,
   prevSort: null,
+  data: '',
 };
 
 export const defaultQueryParams: RouteParams = {
@@ -48,7 +50,7 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     case REMOVE_STARRED:
       return { ...state, starred: false };
     case CLEAR_FILTERS:
-      return { ...state, query: '', tag: [], starred: false, sort: null };
+      return { ...state, query: '', tag: [], starred: false, sort: null, data: '' };
     case TOGGLE_SORT: {
       const sort = action.payload;
       if (state.layout === SearchLayout.Folders) {
@@ -63,6 +65,8 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       }
       return { ...state, layout, sort: state.prevSort };
     }
+    case DATA_CHANGE:
+      return { ...state, data: action.payload };
     default:
       return state;
   }

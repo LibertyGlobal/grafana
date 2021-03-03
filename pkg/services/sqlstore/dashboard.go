@@ -261,6 +261,10 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
+	if len(query.Data) > 0 {
+		filters = append(filters, searchstore.DataFilter{Dialect: dialect, Data: query.Data})
+	}
+
 	var res []DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: dialect, Filters: filters}
 

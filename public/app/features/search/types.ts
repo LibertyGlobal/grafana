@@ -72,6 +72,7 @@ export interface DashboardQuery {
   // Save sorting data between layouts
   prevSort: SelectableValue | null;
   layout: SearchLayout;
+  data: string;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
@@ -102,4 +103,5 @@ export interface RouteParams {
   starred?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
+  data?: string | null;
 }

@@ -18,6 +18,7 @@ const searchQuery = {
   prevSort: null,
   tag: ['tag'],
   query: '',
+  data: '',
   skipRecent: true,
   skipStarred: true,
   folderIds: [],

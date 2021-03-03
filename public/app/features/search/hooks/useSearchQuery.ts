@@ -5,6 +5,7 @@ import {
   ADD_TAG,
   CLEAR_FILTERS,
   LAYOUT_CHANGE,
+  DATA_CHANGE,
   QUERY_CHANGE,
   SET_TAGS,
   TOGGLE_SORT,
@@ -58,6 +59,11 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocat
     updateLocationQuery({ layout });
   };
 
+  const onDataChange = (data: SearchLayout) => {
+    dispatch({ type: DATA_CHANGE, payload: data });
+    updateLocationQuery({ data });
+  };
+
   return {
     query,
     hasFilters: hasFilters(query),
@@ -68,5 +74,6 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocat
     onTagAdd,
     onSortChange,
     onLayoutChange,
+    onDataChange,
   };
 };
