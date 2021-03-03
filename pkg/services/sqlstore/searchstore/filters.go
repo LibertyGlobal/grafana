@@ -90,6 +90,15 @@ func (f FolderFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 
+type DataFilter struct {
+	Dialect migrator.Dialect
+	Data    string
+}
+
+func (f DataFilter) Where() (string, []interface{}) {
+	return fmt.Sprintf("dashboard.data %s ?", f.Dialect.LikeStr()), []interface{}{"%" + f.Data + "%"}
+}
+
 type DashboardFilter struct {
 	IDs []int64
 }

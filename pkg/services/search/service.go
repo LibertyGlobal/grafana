@@ -27,6 +27,7 @@ type Query struct {
 	FolderIds    []int64
 	Permission   models.PermissionType
 	Sort         string
+	Data         string
 
 	Result HitList
 }
@@ -43,6 +44,7 @@ type FindPersistedDashboardsQuery struct {
 	Limit        int64
 	Page         int64
 	Permission   models.PermissionType
+	Data         string
 
 	Filters []interface{}
 
@@ -78,6 +80,7 @@ func (s *SearchService) searchHandler(query *Query) error {
 		Limit:        query.Limit,
 		Page:         query.Page,
 		Permission:   query.Permission,
+		Data:         query.Data,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

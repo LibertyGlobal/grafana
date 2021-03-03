@@ -22,6 +22,7 @@ func Search(c *models.ReqContext) response.Response {
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
 	permission := models.PERMISSION_VIEW
+	data := c.Query("data")
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
@@ -60,6 +61,7 @@ func Search(c *models.ReqContext) response.Response {
 		FolderIds:    folderIDs,
 		Permission:   permission,
 		Sort:         sort,
+		Data:         data,
 	}
 
 	err := bus.Dispatch(&searchQuery)

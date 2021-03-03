@@ -68,6 +68,7 @@ export interface DashboardQuery {
   folderIds: number[];
   sort: SelectableValue | null;
   layout: SearchLayout;
+  data: string;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
@@ -98,4 +99,5 @@ export interface RouteParams {
   starred?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
+  data?: string | null;
 }

@@ -22,3 +22,4 @@ export const SET_TAGS = 'SET_TAGS';
 export const ADD_TAG = 'ADD_TAG';
 export const TOGGLE_SORT = 'TOGGLE_SORT';
 export const LAYOUT_CHANGE = 'LAYOUT_CHANGE';
+export const DATA_CHANGE = 'DATA_CHANGE';

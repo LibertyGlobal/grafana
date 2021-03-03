@@ -8,6 +8,7 @@ import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
 import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
+import { DataField } from './DataField';
 
 export interface OwnProps {
   onCloseSearch: () => void;
@@ -16,10 +17,15 @@ export interface OwnProps {
 export type Props = OwnProps & ConnectProps & DispatchProps;
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateLocation }) => {
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
-    params,
-    updateLocation
-  );
+  const {
+    query,
+    onQueryChange,
+    onTagFilterChange,
+    onTagAdd,
+    onSortChange,
+    onLayoutChange,
+    onDataChange,
+  } = useSearchQuery(params, updateLocation);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -29,6 +35,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateL
       <div className={styles.container}>
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+          <DataField query={query} onChange={onDataChange} onKeyDown={onKeyDown} clearable />
           <div className={styles.closeBtn}>
             <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
