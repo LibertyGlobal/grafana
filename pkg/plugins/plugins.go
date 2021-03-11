@@ -375,7 +375,12 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return err
 	}
 
-	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
+	var signatureState PluginSignatureState
+	if s.cfg.PluginsForceValid {
+		signatureState, err = getPluginForcedSignatureState(s.log, &pluginCommon)
+	} else {
+		signatureState, err = getPluginSignatureState(s.log, &pluginCommon)
+	}
 	if err != nil {
 		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
 		return err
