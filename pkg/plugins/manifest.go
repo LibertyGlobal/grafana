@@ -96,6 +96,18 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
+// getPluginSignatureState returns the always valid signature state for a plugin.
+func getPluginForcedSignatureState(log log.Logger, plugin *PluginBase) (PluginSignatureState, error) {
+	log.Debug("Getting forced signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
+
+	log.Debug("Plugin is forced to be valid", "id", plugin.Id)
+	return PluginSignatureState{
+		Status:     pluginSignatureValid,
+		Type:       grafanaType,
+		SigningOrg: "Grafana",
+	}, nil
+}
+
 // getPluginSignatureState returns the signature state for a plugin.
 func getPluginSignatureState(log log.Logger, plugin *PluginBase) (PluginSignatureState, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
