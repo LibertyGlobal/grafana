@@ -9,7 +9,8 @@ WORKDIR /usr/src/app/
 COPY package.json yarn.lock ./
 COPY packages packages
 
-RUN yarn install --pure-lockfile --no-progress
+RUN yarn cache clean
+RUN yarn install --pure-lockfile --no-progress --network-concurrency 1
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
