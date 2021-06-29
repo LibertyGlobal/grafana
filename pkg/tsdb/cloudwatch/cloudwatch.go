@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -20,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/grafana/grafana/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -320,6 +320,11 @@ func (e *cloudWatchExecutor) getAWSDatasourceSettings(region string) *awsds.AWSD
 		profile = e.DataSource.Database // legacy support
 	}
 
+	httpClient, err := e.DataSource.GetHttpClient()
+	if err != nil {
+		return nil
+	}
+
 	return &awsds.AWSDatasourceSettings{
 		Region:        region,
 		Profile:       profile,
@@ -329,6 +334,7 @@ func (e *cloudWatchExecutor) getAWSDatasourceSettings(region string) *awsds.AWSD
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 		Endpoint:      endpoint,
+		HTTPClient:    httpClient,
 	}
 }
 
